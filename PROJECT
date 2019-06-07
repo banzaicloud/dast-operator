@@ -1,0 +1,3 @@
+version: "2"
+domain: banzaicloud.io
+repo: github.com/banzaicloud/dast-operator

@@ -1,0 +1,8 @@
+apiVersion: security.banzaicloud.io/v1alpha1
+kind: Dast
+metadata:
+  name: dast-sample2
+spec:
+  imagerepo: owasp/zap2docker-live
+  deloymentname: dast-test4
+  replicas: 1
