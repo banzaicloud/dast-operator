@@ -30,6 +30,7 @@ type DastSpec struct {
 	ImageRepo      string `json:"imagerepo"`
 	DeploymentName string `json:"deloymentname"`
 	Replicas       *int32 `json:"replicas"`
+	Target         string `json:"target,omitepty"`
 }
 
 // DastStatus defines the observed state of Dast

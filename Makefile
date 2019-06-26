@@ -13,7 +13,8 @@ test: generate fmt vet manifests
 
 # Build manager binary
 manager: generate fmt vet
-	go build -o bin/dast-operator ./cmd/...
+	go build -o bin/dast-operator ./cmd/dast-operator/...
+	go build -o bin/dynamic-analyzer ./cmd/dynamic-analyzer/...
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
