@@ -37,7 +37,7 @@ type Reconciler struct {
 	resources.Reconciler
 }
 
-// New creates a new reconciler for Zapproxy
+// New creates a new reconciler for analyzer
 func New(client client.Client, dast *securityv1alpha1.Dast) *Reconciler {
 	return &Reconciler{
 		Reconciler: resources.Reconciler{
@@ -47,7 +47,7 @@ func New(client client.Client, dast *securityv1alpha1.Dast) *Reconciler {
 	}
 }
 
-// Reconcile implements the reconcile logic for Zapproxy
+// Reconcile implements the reconcile logic for analyzer
 func (r *Reconciler) Reconcile(log logr.Logger) error {
 	log = log.WithValues("component", componentName)
 
