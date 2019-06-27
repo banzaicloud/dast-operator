@@ -60,7 +60,7 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 								"-a",
 								"abcd1234",
 								"-p",
-								"zap-proxy:8080",
+								"http://" + dast.Spec.DeploymentName + ":8080",
 							},
 						},
 					},

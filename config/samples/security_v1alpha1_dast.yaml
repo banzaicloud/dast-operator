@@ -5,4 +5,4 @@ metadata:
 spec:
   imagerepo: owasp/zap2docker-live
   deloymentname: dast-test
-  target: test-target
+  target: "http://infrastructure-team.com"

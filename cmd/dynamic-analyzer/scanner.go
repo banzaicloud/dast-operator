@@ -43,7 +43,7 @@ func init() {
 	scannerCmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
 	scannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
 	scannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", "api-key", "Zap api key")
-	scannerCmd.Flags().BoolVarP(&serve, "serve", "s", true, "serve results")
+	scannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
 	rootCmd.AddCommand(scannerCmd)
 }
 
@@ -62,6 +62,7 @@ func scanner() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// The scan now returns a scan id to support concurrent scanning
 	scanid := resp["scan"].(string)
 	for {
