@@ -3,7 +3,7 @@ FROM golang:1.12.5 as builder
 
 WORKDIR /workspace
 # Copy the go source
-COPY cmd/ cmd/
+COPY cmd/dast-operator cmd/
 COPY api/ api/
 COPY controllers/ controllers/
 # Copy the Go Modules manifests

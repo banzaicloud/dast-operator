@@ -51,12 +51,12 @@ var _ = Describe("Dast", func() {
 		It("should create an object successfully", func() {
 
 			key = types.NamespacedName{
-				Name:      "foo",
+				Name:      "dast-sample",
 				Namespace: "default",
 			}
 			created = &Dast{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo",
+					Name:      "dast-sample",
 					Namespace: "default",
 				}}
 

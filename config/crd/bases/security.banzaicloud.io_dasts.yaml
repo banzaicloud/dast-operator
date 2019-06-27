@@ -391,13 +391,12 @@ spec:
               description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                 Important: Run "make" to regenerate code after modifying this file'
               type: string
-            replicas:
-              format: int32
-              type: integer
+            target:
+              type: string
           required:
           - imagerepo
           - deloymentname
-          - replicas
+          - target
           type: object
         status:
           type: object

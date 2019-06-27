@@ -29,7 +29,6 @@ type DastSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	ImageRepo      string `json:"imagerepo"`
 	DeploymentName string `json:"deloymentname"`
-	Replicas       *int32 `json:"replicas"`
 	Target         string `json:"target,omitepty"`
 }
 

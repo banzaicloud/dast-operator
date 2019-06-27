@@ -36,3 +36,23 @@ rules:
   - list
   - update
   - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - create
+  - list
+  - update
+  - patch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - create
+  - list
+  - update
+  - patch
