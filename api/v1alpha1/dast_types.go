@@ -27,9 +27,20 @@ import (
 type DastSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ImageRepo      string `json:"imagerepo"`
-	DeploymentName string `json:"deloymentname"`
-	Target         string `json:"target,omitepty"`
+	ZapProxy ZapProxy `json:"zapproxy"`
+	Analyzer Analyzer `json:"analyzer"`
+}
+
+type ZapProxy struct {
+	Image  string `json:"image"`
+	Name   string `json:"name"`
+	APIKey string `json:"apikey"`
+}
+
+type Analyzer struct {
+	Image  string `json:"image"`
+	Name   string `json:"name"`
+	Target string `json:"target,omitepty"`
 }
 
 // DastStatus defines the observed state of Dast

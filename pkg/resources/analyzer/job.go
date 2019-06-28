@@ -35,7 +35,7 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 	completion := int32(1)
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dast.Spec.DeploymentName,
+			Name:      dast.Spec.Analyzer.Name,
 			Namespace: dast.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),
@@ -49,18 +49,18 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 					RestartPolicy: "Never",
 					Containers: []corev1.Container{
 						{
-							Name:            "analyzer",
-							Image:           "test2:latest",
+							Name:            dast.Spec.Analyzer.Name,
+							Image:           dast.Spec.Analyzer.Image,
 							ImagePullPolicy: "IfNotPresent",
 							Command: []string{
 								"/dynamic-analyzer",
 								"scanner",
 								"-t",
-								dast.Spec.Target,
+								dast.Spec.Analyzer.Target,
 								"-a",
-								"abcd1234",
+								dast.Spec.ZapProxy.APIKey,
 								"-p",
-								"http://" + dast.Spec.DeploymentName + ":8080",
+								"http://" + dast.Spec.ZapProxy.Name + ":8080",
 							},
 						},
 					},

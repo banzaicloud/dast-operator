@@ -22,7 +22,7 @@ import (
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
-// Reconciler holds client and CR for Kafka
+// Reconciler holds client and CR for Dast
 type Reconciler struct {
 	client.Client
 	Dast *securityv1alpha1.Dast

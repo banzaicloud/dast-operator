@@ -33,13 +33,13 @@ func (r *Reconciler) deployment(log logr.Logger) runtime.Object {
 
 func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 	labels := map[string]string{
-		"app":        "dast",
+		"app":        componentName,
 		"controller": dast.Name,
 	}
 	replicas := int32(1)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dast.Spec.DeploymentName,
+			Name:      dast.Spec.ZapProxy.Name,
 			Namespace: dast.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),
@@ -58,7 +58,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:    "zap-proxy",
-							Image:   dast.Spec.ImageRepo,
+							Image:   dast.Spec.ZapProxy.Image,
 							Command: []string{"zap.sh"},
 							Args: []string{
 								"-daemon",
@@ -67,7 +67,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 								"-port",
 								"8080",
 								"-config",
-								"api.key=abcd1234",
+								"api.key=" + dast.Spec.ZapProxy.APIKey,
 								"-config",
 								"api.addrs.addr.name=.*",
 								"-config",
@@ -88,7 +88,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 										HTTPHeaders: []corev1.HTTPHeader{
 											{
 												Name:  "X-ZAP-API-Key",
-												Value: "abcd1234",
+												Value: dast.Spec.ZapProxy.APIKey,
 											},
 										},
 									},

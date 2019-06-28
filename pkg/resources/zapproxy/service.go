@@ -32,12 +32,12 @@ func (r *Reconciler) service(log logr.Logger) runtime.Object {
 
 func newService(dast *securityv1alpha1.Dast) *corev1.Service {
 	labels := map[string]string{
-		"app":        "dast",
+		"app":        componentName,
 		"controller": dast.Name,
 	}
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dast.Spec.DeploymentName,
+			Name:      dast.Spec.ZapProxy.Name,
 			Namespace: dast.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),

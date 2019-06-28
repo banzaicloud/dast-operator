@@ -3,6 +3,11 @@ kind: Dast
 metadata:
   name: dast-sample
 spec:
-  imagerepo: owasp/zap2docker-live
-  deloymentname: dast-test
-  target: "http://infrastructure-team.com"
+  zapproxy:
+    image: owasp/zap2docker-live
+    name: dast-test
+    apikey: abcd1234
+  analyzer:
+    image:  "banzaicloud/dast-analyzer:latest"
+    name: analyzer
+    target: "http://infrastructure-team.com"

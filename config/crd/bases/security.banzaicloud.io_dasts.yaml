@@ -385,18 +385,37 @@ spec:
           type: object
         spec:
           properties:
-            deloymentname:
-              type: string
-            imagerepo:
+            analyzer:
+              properties:
+                image:
+                  type: string
+                name:
+                  type: string
+                target:
+                  type: string
+              required:
+              - image
+              - name
+              - target
+              type: object
+            zapproxy:
               description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                 Important: Run "make" to regenerate code after modifying this file'
-              type: string
-            target:
-              type: string
+              properties:
+                apikey:
+                  type: string
+                image:
+                  type: string
+                name:
+                  type: string
+              required:
+              - image
+              - name
+              - apikey
+              type: object
           required:
-          - imagerepo
-          - deloymentname
-          - target
+          - zapproxy
+          - analyzer
           type: object
         status:
           type: object
