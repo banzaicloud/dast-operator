@@ -15,13 +15,18 @@
 package analyzer
 
 import (
-	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
-	"github.com/banzaicloud/dast-operator/pkg/resources"
+	"context"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/goph/emperror"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
+	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
+	"github.com/banzaicloud/dast-operator/pkg/resources"
 )
 
 const (
@@ -52,6 +57,32 @@ func (r *Reconciler) Reconcile(log logr.Logger) error {
 	log = log.WithValues("component", componentName)
 
 	log.V(1).Info("Reconciling")
+
+	key := types.NamespacedName{
+		Name:      r.Dast.Spec.ZapProxy.Name,
+		Namespace: r.Dast.Namespace,
+	}
+
+	zapDeployment := appsv1.Deployment{}
+	r.Get(context.TODO(), key, &zapDeployment)
+
+	if func(deployment *appsv1.Deployment) bool {
+		timeout := time.After(1 * time.Minute)
+		ticker := time.NewTicker(500 * time.Millisecond)
+		for {
+			select {
+			case <-timeout:
+				return false
+			case <-ticker.C:
+				r.Get(context.TODO(), key, deployment)
+				if k8sutil.GetDeploymentStatusAvailable(deployment, log) {
+					return true
+				}
+			}
+		}
+	}(&zapDeployment) {
+		log.Info("deployment is available")
+	}
 
 	for _, res := range []resources.ResourceWithLogs{
 		r.job,
