@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -56,6 +57,10 @@ func scanner() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	_, err = client.Core().DeleteAllAlerts()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Start spidering the target
 	fmt.Println("Spider : " + target)
 	resp, err := client.Spider().Scan(target, "", "", "", "")
@@ -65,6 +70,7 @@ func scanner() {
 
 	// The scan now returns a scan id to support concurrent scanning
 	scanid := resp["scan"].(string)
+	fmt.Println("Spider scan : " + scanid)
 	for {
 		time.Sleep(1000 * time.Millisecond)
 		resp, _ = client.Spider().Status(scanid)
@@ -85,6 +91,7 @@ func scanner() {
 	}
 	// The scan now returns a scan id to support concurrent scanning
 	scanid = resp["scan"].(string)
+	fmt.Println("Active scan : " + scanid)
 	for {
 		time.Sleep(5000 * time.Millisecond)
 		resp, _ = client.Ascan().Status(scanid)
@@ -96,12 +103,16 @@ func scanner() {
 	}
 	fmt.Println("Active Scan complete")
 	fmt.Println("Alerts:")
-	report, err := client.Core().Htmlreport()
+	alerts, err := client.Core().Alerts(target, "", "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(report))
+	fmt.Printf("%v", alerts)
+	jsonString, err := json.Marshal(alerts)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if serve {
-		serveResults(report)
+		serveResults(jsonString)
 	}
 }
