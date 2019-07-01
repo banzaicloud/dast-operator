@@ -56,3 +56,13 @@ rules:
   - list
   - update
   - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - create
+  - list
+  - update
+  - patch

@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,8 +28,8 @@ import (
 type DastSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ZapProxy ZapProxy `json:"zapproxy"`
-	Analyzer Analyzer `json:"analyzer"`
+	ZapProxy ZapProxy `json:"zapproxy,omitempty"`
+	Analyzer Analyzer `json:"analyzer,omitempty"`
 }
 
 type ZapProxy struct {
@@ -38,9 +39,10 @@ type ZapProxy struct {
 }
 
 type Analyzer struct {
-	Image  string `json:"image"`
-	Name   string `json:"name"`
-	Target string `json:"target,omitepty"`
+	Image   string          `json:"image"`
+	Name    string          `json:"name"`
+	Target  string          `json:"target,omitempty"`
+	Service *corev1.Service `json:"service,omitempty"`
 }
 
 // DastStatus defines the observed state of Dast
@@ -56,7 +58,7 @@ type Dast struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DastSpec   `json:"spec,omitempty"`
+	Spec   DastSpec   `json:"spec"`
 	Status DastStatus `json:"status,omitempty"`
 }
 

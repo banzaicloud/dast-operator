@@ -16,6 +16,7 @@ package resources
 
 import (
 	"github.com/go-logr/logr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -33,8 +34,8 @@ type ComponentReconciler interface {
 	Reconcile(log logr.Logger) error
 }
 
-// Resource simple function without parameter
-type Resource func() runtime.Object
-
 // ResourceWithLogs function with log parameter
 type ResourceWithLogs func(log logr.Logger) runtime.Object
+
+// ResourceWithOwnerRef function with log and owner references
+type ResourceWithOwnerRef func(log logr.Logger, ownerRef *metav1.OwnerReference)

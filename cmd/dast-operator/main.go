@@ -20,7 +20,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/banzaicloud/dast-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -30,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
+	"github.com/banzaicloud/dast-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -67,6 +67,14 @@ func main() {
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Dast")
+		os.Exit(1)
+	}
+	err = (&controllers.ServiceReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Service"),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

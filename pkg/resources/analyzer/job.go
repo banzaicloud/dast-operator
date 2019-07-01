@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
@@ -31,15 +32,21 @@ func (r *Reconciler) job(log logr.Logger) runtime.Object {
 }
 
 func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
+
+	var ownerReferences []metav1.OwnerReference
+	if dast.Spec.Analyzer.Service != nil {
+		ownerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(dast.Spec.Analyzer.Service, schema.GroupVersion{Group: "app", Version: "v1"}.WithKind("Service"))}
+	} else {
+		ownerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast"))}
+	}
+
 	backofflimit := int32(5)
 	completion := int32(1)
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dast.Spec.Analyzer.Name,
-			Namespace: dast.Namespace,
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),
-			},
+			Name:            dast.Spec.Analyzer.Name,
+			Namespace:       dast.Namespace,
+			OwnerReferences: ownerReferences,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit: &backofflimit,

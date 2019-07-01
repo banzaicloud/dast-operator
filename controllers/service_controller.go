@@ -20,7 +20,9 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,28 +30,23 @@ import (
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 	"github.com/banzaicloud/dast-operator/pkg/resources"
 	"github.com/banzaicloud/dast-operator/pkg/resources/analyzer"
-	"github.com/banzaicloud/dast-operator/pkg/resources/zapproxy"
 )
 
-// DastReconciler reconciles a Dast object
-type DastReconciler struct {
+// ServiceReconciler reconciles a Service object
+type ServiceReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=security.banzaicloud.io,resources=dasts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=security.banzaicloud.io,resources=dasts/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;create;list;update;patch
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch
-// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;create;list;update;patch
 
-func (r *DastReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("dast", req.NamespacedName)
+	log := r.Log.WithValues("service", req.NamespacedName)
 
-	var dast securityv1alpha1.Dast
-	if err := r.Get(ctx, req.NamespacedName, &dast); err != nil {
+	var service corev1.Service
+	if err := r.Get(ctx, req.NamespacedName, &service); err != nil {
 		if errors.IsNotFound(err) {
 			// we'll ignore not-found errors, since they can't be fixed by an immediate
 			// requeue (we'll need to wait for a new notification), and we can get them
@@ -59,24 +56,47 @@ func (r *DastReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	reconcilers := []resources.ComponentReconciler{
-		zapproxy.New(r.Client, &dast),
-	}
-	if dast.Spec.Analyzer.Name != "" {
-		reconcilers = append(reconcilers, analyzer.New(r.Client, &dast))
-	}
+	annotations := service.GetAnnotations()
+	if _, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
+		log.Info("service reconciler", "serrvice", service.Spec)
 
-	for _, rec := range reconcilers {
-		err := rec.Reconcile(log)
-		if err != nil {
-			return ctrl.Result{}, err
+		ann := securityv1alpha1.Dast{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      service.GetName(),
+				Namespace: service.GetNamespace(),
+			},
+			Spec: securityv1alpha1.DastSpec{
+				ZapProxy: securityv1alpha1.ZapProxy{
+					Name:   annotations["dast.security.banzaicloud.io/zapproxy"],
+					Image:  "owasp/zap2docker-live",
+					APIKey: "abcd1234",
+				},
+				Analyzer: securityv1alpha1.Analyzer{
+					Image:   "banzaicloud/dast-analyzer:latest",
+					Name:    service.GetName(),
+					Target:  "http://" + service.GetName() + "." + service.GetNamespace() + ".svc.cluster.local",
+					Service: &service,
+				},
+			},
+		}
+
+		reconcilers := []resources.ComponentReconciler{
+			analyzer.New(r.Client, &ann),
+		}
+
+		for _, rec := range reconcilers {
+			err := rec.Reconcile(log)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 	}
+
 	return ctrl.Result{}, nil
 }
 
-func (r *DastReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&securityv1alpha1.Dast{}).
+		For(&corev1.Service{}).
 		Complete(r)
 }
