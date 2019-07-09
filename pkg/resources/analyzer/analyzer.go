@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/goph/emperror"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -64,7 +65,9 @@ func (r *Reconciler) Reconcile(log logr.Logger) error {
 	}
 
 	zapDeployment := appsv1.Deployment{}
-	r.Get(context.TODO(), key, &zapDeployment)
+	if err := r.Get(context.TODO(), key, &zapDeployment); err != nil {
+		return emperror.Wrap(err, "failed to get zap deployment")
+	}
 
 	if func(deployment *appsv1.Deployment) bool {
 		timeout := time.After(1 * time.Minute)
@@ -82,6 +85,36 @@ func (r *Reconciler) Reconcile(log logr.Logger) error {
 		}
 	}(&zapDeployment) {
 		log.Info("deployment is available")
+	}
+
+	if r.Dast.Spec.Analyzer.Service != nil {
+		key := types.NamespacedName{
+			Name:      r.Dast.Spec.Analyzer.Service.GetName(),
+			Namespace: r.Dast.Spec.Analyzer.Service.GetNamespace(),
+		}
+
+		service := corev1.Service{}
+		if err := r.Get(context.TODO(), key, &service); err != nil {
+			return emperror.Wrap(err, "failed to get service")
+		}
+
+		if func(service *corev1.Service) bool {
+			timeout := time.After(1 * time.Minute)
+			ticker := time.NewTicker(500 * time.Millisecond)
+			for {
+				select {
+				case <-timeout:
+					return false
+				case <-ticker.C:
+					r.Get(context.TODO(), key, service)
+					if k8sutil.GetServiceStatus(service) {
+						return true
+					}
+				}
+			}
+		}(&service) {
+			log.Info("service is available")
+		}
 	}
 
 	for _, res := range []resources.ResourceWithLogs{

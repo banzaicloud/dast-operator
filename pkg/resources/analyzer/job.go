@@ -32,7 +32,6 @@ func (r *Reconciler) job(log logr.Logger) runtime.Object {
 }
 
 func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
-
 	var ownerReferences []metav1.OwnerReference
 	if dast.Spec.Analyzer.Service != nil {
 		ownerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(dast.Spec.Analyzer.Service, schema.GroupVersion{Group: "app", Version: "v1"}.WithKind("Service"))}
@@ -64,15 +63,31 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 								"scanner",
 								"-t",
 								dast.Spec.Analyzer.Target,
-								"-a",
-								dast.Spec.ZapProxy.APIKey,
 								"-p",
 								"http://" + dast.Spec.ZapProxy.Name + ":8080",
 							},
+							Env: withEnv(dast),
 						},
 					},
 				},
 			},
 		},
 	}
+}
+
+func withEnv(dast *securityv1alpha1.Dast) []corev1.EnvVar {
+	env := []corev1.EnvVar{
+		{
+			Name: "ZAPAPIKEY",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: dast.Spec.ZapProxy.Name,
+					},
+					Key: "zap_api_key",
+				},
+			},
+		},
+	}
+	return env
 }

@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
+	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
 	"github.com/banzaicloud/dast-operator/pkg/resources"
 	"github.com/banzaicloud/dast-operator/pkg/resources/analyzer"
 )
@@ -57,8 +58,13 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	annotations := service.GetAnnotations()
-	if _, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
+	if zapProxyName, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
 		log.Info("service reconciler", "serrvice", service.Spec)
+
+		var analyzerImage string
+		if analyzerImage, ok = annotations["dast.security.banzaicloud.io/analyzer_image"]; !ok {
+			analyzerImage = "banzaicloud/dast-analyzer:latest"
+		}
 
 		ann := securityv1alpha1.Dast{
 			ObjectMeta: metav1.ObjectMeta{
@@ -67,14 +73,12 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			},
 			Spec: securityv1alpha1.DastSpec{
 				ZapProxy: securityv1alpha1.ZapProxy{
-					Name:   annotations["dast.security.banzaicloud.io/zapproxy"],
-					Image:  "owasp/zap2docker-live",
-					APIKey: "abcd1234",
+					Name: zapProxyName,
 				},
 				Analyzer: securityv1alpha1.Analyzer{
-					Image:   "banzaicloud/dast-analyzer:latest",
+					Image:   analyzerImage,
 					Name:    service.GetName(),
-					Target:  "http://" + service.GetName() + "." + service.GetNamespace() + ".svc.cluster.local",
+					Target:  k8sutil.GetTargetService(&service),
 					Service: &service,
 				},
 			},

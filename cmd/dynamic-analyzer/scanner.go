@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -43,7 +44,7 @@ var scannerCmd = &cobra.Command{
 func init() {
 	scannerCmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
 	scannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
-	scannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", "api-key", "Zap api key")
+	scannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
 	scannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
 	rootCmd.AddCommand(scannerCmd)
 }
@@ -57,10 +58,7 @@ func scanner() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = client.Core().DeleteAllAlerts()
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	// Start spidering the target
 	fmt.Println("Spider : " + target)
 	resp, err := client.Spider().Scan(target, "", "", "", "")
@@ -70,7 +68,6 @@ func scanner() {
 
 	// The scan now returns a scan id to support concurrent scanning
 	scanid := resp["scan"].(string)
-	fmt.Println("Spider scan : " + scanid)
 	for {
 		time.Sleep(1000 * time.Millisecond)
 		resp, _ = client.Spider().Status(scanid)
@@ -91,7 +88,6 @@ func scanner() {
 	}
 	// The scan now returns a scan id to support concurrent scanning
 	scanid = resp["scan"].(string)
-	fmt.Println("Active scan : " + scanid)
 	for {
 		time.Sleep(5000 * time.Millisecond)
 		resp, _ = client.Ascan().Status(scanid)

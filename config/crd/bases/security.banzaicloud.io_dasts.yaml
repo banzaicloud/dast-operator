@@ -1028,10 +1028,10 @@ spec:
                 name:
                   type: string
               required:
-              - image
               - name
-              - apikey
               type: object
+          required:
+          - zapproxy
           type: object
         status:
           type: object

@@ -36,6 +36,12 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 		"app":        componentName,
 		"controller": dast.Name,
 	}
+
+	var zapImage string
+	if zapImage := dast.Spec.ZapProxy.Image; zapImage == "" {
+		zapImage = "owasp/zap2docker-live"
+	}
+
 	replicas := int32(1)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -58,7 +64,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:    "zap-proxy",
-							Image:   dast.Spec.ZapProxy.Image,
+							Image:   zapImage,
 							Command: []string{"zap.sh"},
 							Args: []string{
 								"-daemon",

@@ -54,6 +54,7 @@ func (r *Reconciler) Reconcile(log logr.Logger) error {
 	log.V(1).Info("Reconciling")
 
 	for _, res := range []resources.ResourceWithLogs{
+		r.secret,
 		r.deployment,
 		r.service,
 	} {

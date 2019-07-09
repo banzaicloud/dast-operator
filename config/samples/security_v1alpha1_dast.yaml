@@ -10,4 +10,4 @@ spec:
   analyzer:
     image:  "banzaicloud/dast-analyzer:latest"
     name: analyzer
-    target: "http://infrastructure-team.com"
+    target: "http://test-service.default.cluster.local"

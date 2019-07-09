@@ -12,26 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resources
+package zapproxy
 
 import (
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
-// Reconciler holds client and CR for Dast
-type Reconciler struct {
-	client.Client
-	Dast *securityv1alpha1.Dast
+// service return a secret for zapproxy
+func (r *Reconciler) secret(log logr.Logger) runtime.Object {
+
+	return newSecret(r.Dast)
 }
 
-// ComponentReconciler describes the Reconcile method
-type ComponentReconciler interface {
-	Reconcile(log logr.Logger) error
+func newSecret(dast *securityv1alpha1.Dast) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dast.Spec.ZapProxy.Name,
+			Namespace: dast.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),
+			},
+		},
+		Data: map[string][]byte{
+			"zap_api_key": []byte(dast.Spec.ZapProxy.APIKey),
+		},
+	}
 }
-
-// ResourceWithLogs function with log parameter
-type ResourceWithLogs func(log logr.Logger) runtime.Object
