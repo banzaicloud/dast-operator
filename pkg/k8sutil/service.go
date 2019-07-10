@@ -23,7 +23,7 @@ import (
 )
 
 func GetServiceStatus(service *corev1.Service) bool {
-
+	// TODO improve service statucs check
 	if service.Spec.ClusterIP != "" {
 		return true
 	}
