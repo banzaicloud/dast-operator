@@ -38,8 +38,10 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 	}
 
 	var zapImage string
-	if zapImage := dast.Spec.ZapProxy.Image; zapImage == "" {
+	if dast.Spec.ZapProxy.Image == "" {
 		zapImage = "owasp/zap2docker-live"
+	} else {
+		zapImage = dast.Spec.ZapProxy.Image
 	}
 
 	replicas := int32(1)

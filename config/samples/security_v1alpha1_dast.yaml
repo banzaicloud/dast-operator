@@ -4,7 +4,6 @@ metadata:
   name: dast-sample
 spec:
   zapproxy:
-    image: owasp/zap2docker-live
     name: dast-test
     apikey: abcd1234
   analyzer:
