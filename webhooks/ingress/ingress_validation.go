@@ -14,26 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package resources
+package ingress
 
 import (
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 )
 
-// Reconciler holds client and CR for Dast
-type Reconciler struct {
-	client.Client
-	Dast *securityv1alpha1.Dast
+func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger) *admissionv1beta1.AdmissionResponse {
+	log.Info("Ehunnvagyoke")
+	return nil
 }
-
-// ComponentReconciler describes the Reconcile method
-type ComponentReconciler interface {
-	Reconcile(log logr.Logger) error
-}
-
-// ResourceWithLogs function with log parameter
-type ResourceWithLogs func(log logr.Logger) runtime.Object

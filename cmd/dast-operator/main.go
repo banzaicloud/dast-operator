@@ -30,6 +30,7 @@ import (
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 	"github.com/banzaicloud/dast-operator/controllers"
+	"github.com/banzaicloud/dast-operator/webhooks"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -72,6 +73,14 @@ func main() {
 	err = (&controllers.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Service"),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
+	err = (&webhooks.IngressWH{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("webhooks").WithName("Ingress"),
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")

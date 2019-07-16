@@ -14,26 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package resources
+package webhooks
 
 import (
+	"net"
+	"net/http"
+
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
+	"github.com/banzaicloud/dast-operator/webhooks/ingress"
 )
 
-// Reconciler holds client and CR for Dast
-type Reconciler struct {
-	client.Client
-	Dast *securityv1alpha1.Dast
+type IngressWH struct {
+	Client client.Client
+	Log    logr.Logger
 }
 
-// ComponentReconciler describes the Reconcile method
-type ComponentReconciler interface {
-	Reconcile(log logr.Logger) error
+func (r *IngressWH) SetupWithManager(mgr ctrl.Manager) error {
+	return mgr.Add(r)
 }
 
-// ResourceWithLogs function with log parameter
-type ResourceWithLogs func(log logr.Logger) runtime.Object
+func (r *IngressWH) Start(<-chan struct{}) error {
+	ln, _ := net.Listen("tcp", ":5555")
+	httpServer := &http.Server{Handler: ingress.NewApp(r.Log)}
+	r.Log.Info("Starting the HTTP server.")
+
+	return httpServer.Serve(ln)
+}
