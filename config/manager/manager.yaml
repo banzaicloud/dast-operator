@@ -45,9 +45,9 @@ spec:
     spec:
       containers:
       - command:
-        - /manager
-        image: controller:latest
-        imagePullPolicy: Always
+        - /dast-operator
+        image: banzaicloud/dast-operator:latest
+        imagePullPolicy: Never
         name: manager
         resources:
           limits:

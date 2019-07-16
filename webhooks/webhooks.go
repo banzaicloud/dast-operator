@@ -17,6 +17,9 @@ limitations under the License.
 package webhooks
 
 import (
+	"crypto/tls"
+	"flag"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -32,14 +35,38 @@ type IngressWH struct {
 	Log    logr.Logger
 }
 
+type serverConfig struct {
+	certFile string
+	keyFile  string
+	port     int
+}
+
+var parameters serverConfig
+
+func init() {
+	flag.IntVar(&parameters.port, "port", 8443, "Webhook server port.")
+	flag.StringVar(&parameters.certFile, "tlsCertFile", "/etc/webhook/certs/cert.pem", "File containing the x509 Certificate for HTTPS.")
+	flag.StringVar(&parameters.keyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "File containing the x509 private key to --tlsCertFile.")
+}
+
 func (r *IngressWH) SetupWithManager(mgr ctrl.Manager) error {
 	return mgr.Add(r)
 }
 
 func (r *IngressWH) Start(<-chan struct{}) error {
-	ln, _ := net.Listen("tcp", ":5555")
-	httpServer := &http.Server{Handler: ingress.NewApp(r.Log)}
-	r.Log.Info("Starting the HTTP server.")
+	flag.Parse()
 
-	return httpServer.Serve(ln)
+	pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
+	if err != nil {
+		r.Log.Error(err, "Failed to load key pair")
+	}
+
+	ln, _ := net.Listen("tcp", fmt.Sprintf(":%v", parameters.port))
+	httpServer := &http.Server{
+		Handler:   ingress.NewApp(r.Log),
+		TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
+	}
+	r.Log.Info("starting the webhook.")
+
+	return httpServer.ServeTLS(ln, "", "")
 }

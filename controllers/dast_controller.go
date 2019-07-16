@@ -39,10 +39,11 @@ type DastReconciler struct {
 }
 
 // +kubebuilder:rbac:groups=security.banzaicloud.io,resources=dasts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=security.banzaicloud.io,resources=dasts/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;create;list;update;patch
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch
-// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;create;list;update;patch
+// +kubebuilder:rbac:groups=security.banzaicloud.io,resources=dasts/status,verbs=get;update;patch;watch
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;create;list;update;patch;watch
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;create;list;update;patch;watch
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch;watch
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;list;update;patch;watch
 
 func (r *DastReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

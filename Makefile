@@ -10,7 +10,7 @@ all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./api/... ./controllers/... ./pkg/... -coverprofile cover.out
+	go test ./api/... ./controllers/... ./pkg/... ./webhooks/... -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet

@@ -6,6 +6,7 @@ WORKDIR /workspace
 COPY cmd/ cmd/
 COPY api/ api/
 COPY controllers/ controllers/
+COPY webhooks/ webhooks/
 COPY pkg/ pkg/
 # Copy the Go Modules manifests
 COPY go.mod go.mod

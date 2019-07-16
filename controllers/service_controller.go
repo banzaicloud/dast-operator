@@ -40,7 +40,7 @@ type ServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch;watch
 
 func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

@@ -6,7 +6,4 @@ spec:
   zapproxy:
     name: dast-test
     apikey: abcd1234
-  analyzer:
-    image:  "banzaicloud/dast-analyzer:latest"
-    name: analyzer
-    target: "http://test-service.default.cluster.local"
+

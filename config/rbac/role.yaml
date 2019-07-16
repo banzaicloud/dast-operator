@@ -26,6 +26,7 @@ rules:
   - get
   - update
   - patch
+  - watch
 - apiGroups:
   - apps
   resources:
@@ -36,16 +37,7 @@ rules:
   - list
   - update
   - patch
-- apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - get
-  - create
-  - list
-  - update
-  - patch
+  - watch
 - apiGroups:
   - batch
   resources:
@@ -56,6 +48,7 @@ rules:
   - list
   - update
   - patch
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -66,3 +59,26 @@ rules:
   - list
   - update
   - patch
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - create
+  - list
+  - update
+  - patch
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - create
+  - list
+  - update
+  - patch
+  - watch
