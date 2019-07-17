@@ -43,11 +43,15 @@ spec:
         control-plane: controller-manager
         controller-tools.k8s.io: "1.0"
     spec:
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: webhook-secret
       containers:
       - command:
         - /dast-operator
         image: banzaicloud/dast-operator:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         name: manager
         resources:
           limits:
@@ -56,4 +60,10 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        volumeMounts:
+          - name: webhook-certs
+            mountPath: /etc/webhook/certs
+            readOnly: true
+        ports:
+          - containerPort: 8443
       terminationGracePeriodSeconds: 10

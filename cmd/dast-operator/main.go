@@ -23,6 +23,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -45,6 +46,7 @@ func init() {
 	batchv1.AddToScheme(scheme)
 	corev1.AddToScheme(scheme)
 	securityv1alpha1.AddToScheme(scheme)
+	extv1beta1.AddToScheme(scheme)
 
 	// +kubebuilder:scaffold:scheme
 }
