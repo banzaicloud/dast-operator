@@ -18,8 +18,11 @@ package ingress
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/goph/emperror"
+	"github.com/zaproxy/zap-api-go/zap"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,14 +38,23 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger) *admissionv
 	case "Ingress":
 		var ingress extv1beta1.Ingress
 		if err := json.Unmarshal(req.Object.Raw, &ingress); err != nil {
-			log.Error(err, "Could not unmarshal raw object")
+			log.Error(err, "could not unmarshal raw object")
 			return &admissionv1beta1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: err.Error(),
 				},
 			}
 		}
-		_ = k8sutil.GetIngressBackendServiceName(&ingress)
+		backendServices := k8sutil.GetIngressBackendServices(&ingress, log)
+		log.Info("Services", "backend_services", backendServices)
+		if !isServiceScanned(backendServices, ingress.GetNamespace(), log) {
+			return &admissionv1beta1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Reason: "backend service isn't scanned",
+				},
+			}
+		}
 	}
 
 	result := &metav1.Status{
@@ -55,14 +67,35 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger) *admissionv
 	}
 }
 
-func isServiceScanned(serviceName string) bool {
+func isServiceScanned(services []map[string]string, namespace string, log logr.Logger) bool {
+
+	for _, service := range services {
+		target := fmt.Sprintf("http://%s.%s.svc.cluster.local:%s", service["name"], namespace, service["port"])
+		log.Info("Target", "url", target)
+	}
 	return false
 }
 
-func getServiceScanSummary(serviceName string) map[string]int {
+func getServiceScanSummary(serviceName string, zapCore *zap.Core) map[string]string {
 	return nil
 }
 
 func getIngressTresholds(ingress *extv1beta1.Ingress) map[string]string {
 	return nil
+}
+
+func validateAgainstTreshold(summary, tershold map[string]string) {
+
+}
+
+func newZapClient(zapAddr string, apiKey string, log logr.Logger) (*zap.Core, error) {
+	cfg := &zap.Config{
+		Proxy:  zapAddr,
+		APIKey: apiKey,
+	}
+	client, err := zap.NewClient(cfg)
+	if err != nil {
+		return nil, emperror.Wrap(err, "annot create zap interface")
+	}
+	return client.Core(), nil
 }

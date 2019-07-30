@@ -19,6 +19,7 @@ package k8sutil
 import (
 	"strconv"
 
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 )
@@ -41,6 +42,16 @@ func GetTargetService(service *corev1.Service) string {
 	return "http://" + service.GetName() + "." + service.GetNamespace() + ".svc.cluster.local:" + portNR
 }
 
-func GetIngressBackendServiceName(ingress *extv1beta1.Ingress) string {
-	return ""
+func GetIngressBackendServices(ingress *extv1beta1.Ingress, log logr.Logger) []map[string]string {
+	log.Info("ingress", "ingress", ingress)
+	backends := []map[string]string{}
+	for _, rule := range ingress.Spec.Rules {
+		for _, path := range rule.HTTP.Paths {
+			backend := map[string]string{}
+			backend["name"] = path.Backend.ServiceName
+			backend["port"] = path.Backend.ServicePort.String()
+			backends = append(backends, backend)
+		}
+	}
+	return backends
 }

@@ -66,6 +66,7 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 								"-t",
 								dast.Spec.Analyzer.Target,
 								"-p",
+								// TODO use https
 								"http://" + dast.Spec.ZapProxy.Name + ":8080",
 							},
 							Env: withEnv(dast),
