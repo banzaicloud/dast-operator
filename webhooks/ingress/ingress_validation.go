@@ -23,6 +23,8 @@ import (
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
 )
 
 func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger) *admissionv1beta1.AdmissionResponse {
@@ -40,6 +42,7 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger) *admissionv
 				},
 			}
 		}
+		_ = k8sutil.GetIngressBackendServiceName(&ingress)
 	}
 
 	result := &metav1.Status{
@@ -50,4 +53,16 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger) *admissionv
 		Allowed: false,
 		Result:  result,
 	}
+}
+
+func isServiceScanned(serviceName string) bool {
+	return false
+}
+
+func getServiceScanSummary(serviceName string) map[string]int {
+	return nil
+}
+
+func getIngressTresholds(ingress *extv1beta1.Ingress) map[string]string {
+	return nil
 }

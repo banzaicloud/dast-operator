@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
 func GetServiceStatus(service *corev1.Service) bool {
@@ -38,4 +39,8 @@ func GetTargetService(service *corev1.Service) string {
 	}
 	// TODO handle protocol
 	return "http://" + service.GetName() + "." + service.GetNamespace() + ".svc.cluster.local:" + portNR
+}
+
+func GetIngressBackendServiceName(ingress *extv1beta1.Ingress) string {
+	return ""
 }
