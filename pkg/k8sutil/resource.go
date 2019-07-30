@@ -55,26 +55,6 @@ func Reconcile(log logr.Logger, client runtimeClient.Client, desired runtime.Obj
 			log.Info("resource created")
 			return nil
 		}
-		// case *appsv1.Deployment:
-		// 	var key runtimeClient.ObjectKey
-		// 	key, err = runtimeClient.ObjectKeyFromObject(current)
-		// 	if err != nil {
-		// 		return emperror.With(err, "kind", desiredType)
-		// 	}
-		// 	log = log.WithValues("kind", desiredType, "name", key.Name)
-
-		// 	err = client.Get(context.TODO(), key, current)
-
-		// 	if err != nil && !apierrors.IsNotFound(err) {
-		// 		return emperror.WrapWith(err, "getting resource failed", "kind", desiredType, "name", key.Name)
-		// 	}
-		// 	if apierrors.IsNotFound(err) {
-		// 		if err := client.Create(context.TODO(), desired); err != nil {
-		// 			return emperror.WrapWith(err, "creating resource failed", "kind", desiredType, "name", key.Name)
-		// 		}
-		// 		log.Info("resource created")
-		// 		return nil
-		// 	}
 	}
 	return nil
 }

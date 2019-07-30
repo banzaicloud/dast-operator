@@ -33,9 +33,10 @@ type DastSpec struct {
 }
 
 type ZapProxy struct {
-	Image  string `json:"image,omitempty"`
-	Name   string `json:"name"`
-	APIKey string `json:"apikey,omitempty"`
+	Image     string `json:"image,omitempty"`
+	Name      string `json:"name"`
+	NameSpace string `json:"namespace,omitempty"`
+	APIKey    string `json:"apikey,omitempty"`
 }
 
 type Analyzer struct {

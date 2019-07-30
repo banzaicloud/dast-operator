@@ -18,10 +18,11 @@ package controllers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,7 +49,7 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	var service corev1.Service
 	if err := r.Get(ctx, req.NamespacedName, &service); err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// we'll ignore not-found errors, since they can't be fixed by an immediate
 			// requeue (we'll need to wait for a new notification), and we can get them
 			// on deleted requests.
@@ -59,6 +60,10 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	annotations := service.GetAnnotations()
 	if zapProxyName, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
+		zapProxyNameSpace, ok := annotations["dast.security.banzaicloud.io/zapproxy_namespace"]
+		if !ok {
+			log.Error(errors.New("missing zapproxy namespace"), "missing annotatons")
+		}
 		log.Info("service reconciler", "serrvice", service.Spec)
 
 		var analyzerImage string
@@ -69,7 +74,7 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		ann := securityv1alpha1.Dast{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      service.GetName(),
-				Namespace: service.GetNamespace(),
+				Namespace: zapProxyNameSpace,
 			},
 			Spec: securityv1alpha1.DastSpec{
 				ZapProxy: securityv1alpha1.ZapProxy{

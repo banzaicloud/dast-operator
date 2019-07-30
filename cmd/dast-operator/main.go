@@ -85,7 +85,7 @@ func main() {
 		Log:    ctrl.Log.WithName("webhooks").WithName("Ingress"),
 	}).SetupWithManager(mgr)
 	if err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		setupLog.Error(err, "unable to create webhook", "webhook", "Ingress")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

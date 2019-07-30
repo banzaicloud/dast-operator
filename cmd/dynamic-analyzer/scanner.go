@@ -103,7 +103,12 @@ func scanner() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%v", alerts)
+	summary, err := client.Core().AlertsSummary(target)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("alerts: %v", alerts)
+	fmt.Printf("summary: %v", summary)
 	jsonString, err := json.Marshal(alerts)
 	if err != nil {
 		log.Fatal(err)
