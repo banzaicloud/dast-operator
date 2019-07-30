@@ -18,6 +18,7 @@ package ingress
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/goph/emperror"
@@ -48,11 +49,21 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger, client clie
 		backendServices := k8sutil.GetIngressBackendServices(&ingress, log)
 		log.Info("Services", "backend_services", backendServices)
 
-		if !isServicesAnnoteted(backendServices, ingress.GetNamespace(), log, client) {
+		ok, err := checkServices(backendServices, ingress.GetNamespace(), log, client)
+		// TODO reason error or failed check
+		if err != nil {
 			return &admissionv1beta1.AdmissionResponse{
 				Allowed: false,
 				Result: &metav1.Status{
-					Reason: "backend service isn't annotated",
+					Reason: metav1.StatusReason(err.Error()),
+				},
+			}
+		}
+		if !ok {
+			return &admissionv1beta1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Reason: "not OK",
 				},
 			}
 		}
@@ -68,20 +79,33 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger, client clie
 	}
 }
 
-func isServicesAnnoteted(services []map[string]string, namespace string, log logr.Logger, client client.Client) bool {
+func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client) (bool, error) {
 	for _, service := range services {
-
-		_, err := k8sutil.GetServiceByName(service["name"], namespace, client)
+		k8sService, err := k8sutil.GetServiceByName(service["name"], namespace, client)
 		if err != nil {
-			log.Error(err, "unable to get service")
+			return false, err
 		}
+		zapProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
+		if err != nil {
+			return false, err
+		}
+		secret, err := k8sutil.GetSercretByName(zapProxyCfg["name"], zapProxyCfg["namespace"], client, log)
+		if err != nil {
+			return false, err
+		}
+		zapCore, err := newZapClient(zapProxyCfg["name"], string(secret.Data["zap_api_key"]), log)
+		if err != nil {
+			return false, err
+		}
+		getServiceScanSummary(service, namespace, zapCore, log)
 	}
-	return false
+	return true, nil
 }
 
-func getServiceScanSummary(serviceName string, zapCore *zap.Core) map[string]string {
-	// target := fmt.Sprintf("http://%s.%s.svc.cluster.local:%s", service["name"], namespace, service["port"])
-	// log.Info("Target", "url", target)
+func getServiceScanSummary(service map[string]string, namespace string, zapCore *zap.Core, log logr.Logger) map[string]string {
+	target := fmt.Sprintf("http://%s.%s.svc.cluster.local:%s", service["name"], namespace, service["port"])
+	log.Info("Target", "url", target)
+
 	return nil
 }
 

@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/go-logr/logr"
+	"github.com/goph/emperror"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
@@ -67,7 +68,7 @@ func GetServiceByName(name, namespace string, client client.Client) (*corev1.Ser
 	}
 	var service corev1.Service
 	if err := client.Get(context.TODO(), key, &service); err != nil {
-		return nil, err
+		return nil, emperror.Wrap(err, "cannot get service by name")
 	}
 
 	return &service, nil
