@@ -63,7 +63,7 @@ func (r *IngressWH) Start(<-chan struct{}) error {
 
 	ln, _ := net.Listen("tcp", fmt.Sprintf(":%v", parameters.port))
 	httpServer := &http.Server{
-		Handler:   ingress.NewApp(r.Log),
+		Handler:   ingress.NewApp(r.Log, r.Client),
 		TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
 	}
 	r.Log.Info("starting the webhook.")

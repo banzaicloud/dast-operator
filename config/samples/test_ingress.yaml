@@ -8,8 +8,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /testpath
+      - path: /
         backend:
-          serviceName: test
+          serviceName: test-service
           servicePort: 80
-          

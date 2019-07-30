@@ -17,11 +17,15 @@ limitations under the License.
 package k8sutil
 
 import (
+	"context"
+	"errors"
 	"strconv"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func GetServiceStatus(service *corev1.Service) bool {
@@ -54,4 +58,38 @@ func GetIngressBackendServices(ingress *extv1beta1.Ingress, log logr.Logger) []m
 		}
 	}
 	return backends
+}
+
+func GetServiceByName(name, namespace string, client client.Client) (*corev1.Service, error) {
+	key := types.NamespacedName{
+		Name:      name,
+		Namespace: namespace,
+	}
+	var service corev1.Service
+	if err := client.Get(context.TODO(), key, &service); err != nil {
+		return nil, err
+	}
+
+	return &service, nil
+}
+
+func GetServiceAnotations(service *corev1.Service, log logr.Logger) (map[string]string, error) {
+	annotations := service.GetAnnotations()
+	zapProxyCfg := map[string]string{}
+	if zapProxyName, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
+		zapProxyCfg["name"] = zapProxyName
+		zapProxyCfg["namespace"], ok = annotations["dast.security.banzaicloud.io/zapproxy_namespace"]
+		if !ok {
+			zapProxyCfg["namespace"] = service.GetNamespace()
+			log.Info("missing zapproxy namespace annotation, using service namespace", "ns_name", zapProxyCfg["namespace"])
+		}
+		zapProxyCfg["analyzer_image"], ok = annotations["dast.security.banzaicloud.io/analyzer_image"]
+		if !ok {
+			zapProxyCfg["analyzer_image"] = "banzaicloud/dast-analyzer:latest"
+			log.Info("missing zapproxy analyzer image annotation, using ", "analyzer_image", zapProxyCfg["analyzer_image"])
+		}
+		return zapProxyCfg, nil
+	}
+
+	return nil, errors.New("service isn't annotated")
 }

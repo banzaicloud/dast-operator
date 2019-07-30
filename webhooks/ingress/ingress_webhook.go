@@ -27,14 +27,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const ingressValidate = "/ingress"
 
 // NewApp returns HTTPHandler
-func NewApp(log logr.Logger) http.Handler {
+func NewApp(log logr.Logger, client client.Client) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(ingressValidate, newHTTPHandler(log))
+	mux.Handle(ingressValidate, newHTTPHandler(log, client))
 	return mux
 }
 
@@ -48,20 +49,22 @@ var (
 // HTTPController collects the greeting use cases and exposes them as HTTP handlers.
 type HTTPController struct {
 	Logger logr.Logger
+	Client client.Client
 }
 
 // NewHTTPHandler returns a new HTTP handler for the greeter.
-func newHTTPHandler(log logr.Logger) http.Handler {
+func newHTTPHandler(log logr.Logger, client client.Client) http.Handler {
 	mux := http.NewServeMux()
-	controller := NewHTTPController(log)
+	controller := NewHTTPController(log, client)
 	mux.HandleFunc(ingressValidate, controller.webhookCTRL)
 	return mux
 }
 
 // NewHTTPController returns a new HTTPController instance.
-func NewHTTPController(log logr.Logger) *HTTPController {
+func NewHTTPController(log logr.Logger, client client.Client) *HTTPController {
 	return &HTTPController{
 		Logger: log,
+		Client: client,
 	}
 }
 
@@ -88,7 +91,7 @@ func (a *HTTPController) webhookCTRL(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Println(r.URL.Path)
 		if r.URL.Path == ingressValidate {
-			admissionResponse = validate(&ar, a.Logger)
+			admissionResponse = validate(&ar, a.Logger, a.Client)
 		}
 	}
 

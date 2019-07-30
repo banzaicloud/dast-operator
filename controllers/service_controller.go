@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -58,46 +57,39 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	annotations := service.GetAnnotations()
-	if zapProxyName, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
-		zapProxyNameSpace, ok := annotations["dast.security.banzaicloud.io/zapproxy_namespace"]
-		if !ok {
-			log.Error(errors.New("missing zapproxy namespace"), "missing annotatons")
-		}
-		log.Info("service reconciler", "serrvice", service.Spec)
+	zapProxyCfg, err := k8sutil.GetServiceAnotations(&service, log)
+	if err != nil {
+		return ctrl.Result{}, nil
+	}
 
-		var analyzerImage string
-		if analyzerImage, ok = annotations["dast.security.banzaicloud.io/analyzer_image"]; !ok {
-			analyzerImage = "banzaicloud/dast-analyzer:latest"
-		}
+	log.Info("service reconciler", "serrvice", service.Spec)
 
-		ann := securityv1alpha1.Dast{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      service.GetName(),
-				Namespace: zapProxyNameSpace,
+	ann := securityv1alpha1.Dast{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      service.GetName(),
+			Namespace: zapProxyCfg["namespace"],
+		},
+		Spec: securityv1alpha1.DastSpec{
+			ZapProxy: securityv1alpha1.ZapProxy{
+				Name: zapProxyCfg["name"],
 			},
-			Spec: securityv1alpha1.DastSpec{
-				ZapProxy: securityv1alpha1.ZapProxy{
-					Name: zapProxyName,
-				},
-				Analyzer: securityv1alpha1.Analyzer{
-					Image:   analyzerImage,
-					Name:    service.GetName(),
-					Target:  k8sutil.GetTargetService(&service),
-					Service: &service,
-				},
+			Analyzer: securityv1alpha1.Analyzer{
+				Image:   zapProxyCfg["analyzer_image"],
+				Name:    service.GetName(),
+				Target:  k8sutil.GetTargetService(&service),
+				Service: &service,
 			},
-		}
+		},
+	}
 
-		reconcilers := []resources.ComponentReconciler{
-			analyzer.New(r.Client, &ann),
-		}
+	reconcilers := []resources.ComponentReconciler{
+		analyzer.New(r.Client, &ann),
+	}
 
-		for _, rec := range reconcilers {
-			err := rec.Reconcile(log)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
+	for _, rec := range reconcilers {
+		err := rec.Reconcile(log)
+		if err != nil {
+			return ctrl.Result{}, err
 		}
 	}
 
