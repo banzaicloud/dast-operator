@@ -8,6 +8,7 @@ require (
 	github.com/goph/emperror v0.17.2
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0
+	github.com/spf13/cast v1.3.0
 	github.com/zaproxy/zap-api-go v0.0.0-20180130105416-8779ab35e992
 	golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
 	k8s.io/api v0.0.0-20190409021203-6e4e0e4f393b

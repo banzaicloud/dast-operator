@@ -19,9 +19,11 @@ package ingress
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/go-logr/logr"
 	"github.com/goph/emperror"
+	"github.com/spf13/cast"
 	"github.com/zaproxy/zap-api-go/zap"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -46,11 +48,12 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger, client clie
 				},
 			}
 		}
+		tresholds := getIngressTresholds(&ingress)
+
 		backendServices := k8sutil.GetIngressBackendServices(&ingress, log)
 		log.Info("Services", "backend_services", backendServices)
 
-		ok, err := checkServices(backendServices, ingress.GetNamespace(), log, client)
-		// TODO reason error or failed check
+		ok, err := checkServices(backendServices, ingress.GetNamespace(), log, client, tresholds)
 		if err != nil {
 			return &admissionv1beta1.AdmissionResponse{
 				Allowed: false,
@@ -63,23 +66,21 @@ func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger, client clie
 			return &admissionv1beta1.AdmissionResponse{
 				Allowed: false,
 				Result: &metav1.Status{
-					Reason: "not OK",
+					Reason: "scan results are above treshold",
 				},
 			}
 		}
 	}
 
-	result := &metav1.Status{
-		Reason: "validating result false",
-	}
-
 	return &admissionv1beta1.AdmissionResponse{
-		Allowed: false,
-		Result:  result,
+		Allowed: true,
+		Result: &metav1.Status{
+			Reason: "scan results are below treshold",
+		},
 	}
 }
 
-func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client) (bool, error) {
+func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client, tresholds map[string]int) (bool, error) {
 	for _, service := range services {
 		k8sService, err := k8sutil.GetServiceByName(service["name"], namespace, client)
 		if err != nil {
@@ -93,38 +94,72 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 		if err != nil {
 			return false, err
 		}
-		zapCore, err := newZapClient(zapProxyCfg["name"], string(secret.Data["zap_api_key"]), log)
+		zapCore, err := newZapClient(zapProxyCfg["name"], zapProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
 		if err != nil {
 			return false, err
 		}
-		getServiceScanSummary(service, namespace, zapCore, log)
+		summary, err := getServiceScanSummary(service, namespace, zapCore, log)
+		if err != nil {
+			return false, err
+		}
+
+		s, err := cast.ToStringMapIntE(summary["alertsSummary"])
+		if err != nil {
+			return false, err
+		}
+		for key, value := range s {
+			if value > tresholds[key] {
+				return false, nil
+			}
+		}
 	}
 	return true, nil
 }
 
-func getServiceScanSummary(service map[string]string, namespace string, zapCore *zap.Core, log logr.Logger) map[string]string {
+func getIngressTresholds(ingress *extv1beta1.Ingress) map[string]int {
+	annotations := ingress.GetAnnotations()
+	treshold := map[string]int{
+		"High":          0,
+		"Medium":        0,
+		"Low":           0,
+		"Informational": 0,
+	}
+	if high, ok := annotations["dast.security.banzaicloud.io/high"]; ok {
+		treshold["High"], _ = strconv.Atoi(high)
+	}
+	if medium, ok := annotations["dast.security.banzaicloud.io/medium"]; ok {
+		treshold["Medium"], _ = strconv.Atoi(medium)
+	}
+	if low, ok := annotations["dast.security.banzaicloud.io/low"]; ok {
+		treshold["Low"], _ = strconv.Atoi(low)
+	}
+	if informational, ok := annotations["dast.security.banzaicloud.io/informational"]; ok {
+		treshold["Informational"], _ = strconv.Atoi(informational)
+	}
+	return treshold
+}
+
+// TODO refactor to pkg
+func getServiceScanSummary(service map[string]string, namespace string, zapCore *zap.Core, log logr.Logger) (map[string]interface{}, error) {
 	target := fmt.Sprintf("http://%s.%s.svc.cluster.local:%s", service["name"], namespace, service["port"])
 	log.Info("Target", "url", target)
-
-	return nil
+	summary, err := zapCore.AlertsSummary(target)
+	if err != nil {
+		return nil, emperror.Wrap(err, "failed to get service summary from ZapProxy")
+	}
+	log.Info("Tresholds", "summary", summary)
+	return summary, nil
 }
 
-func getIngressTresholds(ingress *extv1beta1.Ingress) map[string]string {
-	return nil
-}
-
-func validateAgainstTreshold(summary, tershold map[string]string) {
-
-}
-
-func newZapClient(zapAddr string, apiKey string, log logr.Logger) (*zap.Core, error) {
+func newZapClient(zapAddr, zapNamespace, apiKey string, log logr.Logger) (*zap.Core, error) {
+	// TODO use https
 	cfg := &zap.Config{
-		Proxy:  zapAddr,
+		Proxy:  "http://" + zapAddr + "." + zapNamespace + ".svc.cluster.local:8080",
 		APIKey: apiKey,
 	}
 	client, err := zap.NewClient(cfg)
 	if err != nil {
-		return nil, emperror.Wrap(err, "annot create zap interface")
+		return nil, emperror.Wrap(err, "failed to create zap interface")
 	}
 	return client.Core(), nil
 }

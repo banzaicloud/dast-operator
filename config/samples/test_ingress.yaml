@@ -3,6 +3,9 @@ kind: Ingress
 metadata:
   name: test-ingress
   annotations:
+    dast.security.banzaicloud.io/medium: "2"
+    dast.security.banzaicloud.io/low: "5"
+    dast.security.banzaicloud.io/informational: "10"
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
