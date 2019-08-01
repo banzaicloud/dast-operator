@@ -79,7 +79,7 @@ kubectl create ns test
 kubectl apply -f config/samples/test_secvice.yaml -n test
 ```
 
-Contetnt of manifest file:
+Contetnt of `test_secvice.yaml`:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -121,20 +121,15 @@ spec:
     targetPort: 80
 ```
 
-```shell
-kubectl get po -n test
-```
-
 ### Deploy and test validating webhook
 Deploy ValidatingWebhookConfiguration and webhook service
 ```shell
-kubectl apply -f config/webhook/service.yaml
 kubectl apply -f config/samples/webhook_config.yaml
 ```
 
 Deploy ingress with previous defined `test-service` backend.
 ```shell
-kubeectl apply -f config/samples/test_ingress.yaml -n test
+kubectl apply -f config/samples/test_ingress.yaml -n test
 ```
 
 Example ingress definition:
@@ -162,7 +157,7 @@ spec:
 ### Scan external URL
 ```shell
 kubectl create ns external
-kubectl apply -f config/samples/config/samples/security_v1alpha1_dast_external.yaml
+kubectl apply -f config/samples/security_v1alpha1_dast_external.yaml -n external
 ```
 
 Content of DAST CR

@@ -19,7 +19,7 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dast-operator-service
+  name: webhook-service
   namespace: system
   labels:
     control-plane: dast-operator
@@ -30,6 +30,7 @@ spec:
     controller-tools.k8s.io: "1.0"
   ports:
   - port: 443
+    targetPort: 8443
 ---
 apiVersion: apps/v1
 kind: StatefulSet
