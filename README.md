@@ -2,13 +2,13 @@
 
 > Dynamic application security testing (DAST) is a process of testing an application or software product in an operating state.
 
-This operator leverages OWASP ZAP to make automated basic web service security testing currently. API and Fuzz Testing on the DAST operator roadmap.
+This operator leverages OWASP ZAP to make automated basic web service security testing currently.
 
 ### The operator current features:
 - Deploy OWASP ZAP proxy defined in custom resource
-- Sacan external URL defined in custom resource
+- Scan external URL defined in custom resource
 - Scan internal services based on its annotations
-- Before deploying ingress, check backend services whether scanned and scan results below defined trershold
+- Before deploying ingress, check backend services whether scanned and scan results are below defined tresholds
 
 ### On the DAST operator roadmap:
 **Short term small improvements:**
@@ -16,13 +16,13 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 - Improve service status check
 - Handle multiple service ports
 - Handle different service protocols
-- Use HTTPS insted of HTTP connectiong to ZAP
+- Use HTTPS insted of HTTP connecting to ZAP
 - Generate randomly ZAP API key if not defied
 
 **Long term new feaures:**
 - API testing with JMeter and ZAP
-- Parameterized security payload with fuzz
 - API Security testing based on OpenAPI
+- Parameterized security payload with fuzz
 
 ## Structure of the DAST operator:
 DAST operator running two reconcilers and one [validating admission webhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
@@ -35,7 +35,7 @@ DAST operator running two reconcilers and one [validating admission webhook](htt
 - Validating webhook for ingress
 
 ## Current limitations:
-Using webhook feature, deploying ingress only successfull when backend service is already scanned. If you deploy something with helm which contains service and ingress definitions as well, the ingress deployment will fail due to backend service scan progress finished at that time.
+Using webhook feature, deploying ingress only successfull when backend service is already scanned. If you deploy something with helm which contains service and ingress definitions as well, the ingress deployment will fail due to scan progress of the backend service won't be finished.
 
 ## Build images
 ```shell
