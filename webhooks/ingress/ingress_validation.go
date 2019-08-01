@@ -94,6 +94,10 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 		if err != nil {
 			return false, err
 		}
+
+		// TODO check scan status and wait for end of progress
+		// check the scanner job is running, completed or not exist
+
 		zapCore, err := newZapClient(zapProxyCfg["name"], zapProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
 		if err != nil {
 			return false, err

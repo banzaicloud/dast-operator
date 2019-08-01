@@ -77,6 +77,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 								"-port",
 								"8080",
 								"-config",
+								// TODO use generated API key
 								"api.key=" + dast.Spec.ZapProxy.APIKey,
 								"-config",
 								"api.addrs.addr.name=.*",
@@ -97,7 +98,8 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 										Port: intstr.IntOrString{IntVal: 8080},
 										HTTPHeaders: []corev1.HTTPHeader{
 											{
-												Name:  "X-ZAP-API-Key",
+												Name: "X-ZAP-API-Key",
+												// TODO use generated API key
 												Value: dast.Spec.ZapProxy.APIKey,
 											},
 										},

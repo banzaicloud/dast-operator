@@ -6,4 +6,3 @@ spec:
   zapproxy:
     name: dast-test
     apikey: abcd1234
-
