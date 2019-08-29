@@ -27,6 +27,8 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 ## Structure of the DAST operator:
 DAST operator running two reconcilers and one [validating admission webhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
 
+![DAST OPERATOR](docs/images/dast.png)
+
 ### Reconcilers
 - DAST reconciler
 - Service reconciler
