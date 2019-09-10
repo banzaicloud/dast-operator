@@ -7,78 +7,67 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - security.banzaicloud.io
+  - ""
   resources:
-  - dasts
+  - secrets
   verbs:
+  - create
   - get
   - list
+  - patch
+  - update
   - watch
-  - create
-  - update
-  - patch
-  - delete
 - apiGroups:
-  - security.banzaicloud.io
+  - ""
   resources:
-  - dasts/status
+  - services
   verbs:
+  - create
   - get
-  - update
+  - list
   - patch
+  - update
   - watch
 - apiGroups:
   - apps
   resources:
   - deployments
   verbs:
-  - get
   - create
+  - get
   - list
-  - update
   - patch
+  - update
   - watch
 - apiGroups:
   - batch
   resources:
   - jobs
   verbs:
-  - get
   - create
+  - get
   - list
-  - update
   - patch
+  - update
   - watch
 - apiGroups:
-  - ""
+  - security.banzaicloud.io
   resources:
-  - services
+  - dasts
   verbs:
-  - get
   - create
+  - delete
+  - get
   - list
-  - update
   - patch
+  - update
   - watch
 - apiGroups:
-  - ""
+  - security.banzaicloud.io
   resources:
-  - secrets
+  - dasts/status
   verbs:
   - get
-  - create
-  - list
-  - update
   - patch
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - get
-  - create
-  - list
   - update
-  - patch
   - watch

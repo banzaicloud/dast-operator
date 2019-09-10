@@ -17,7 +17,7 @@ manager: generate fmt vet
 	go build -o bin/dast-operator ./cmd/dast-operator/...
 
 analyzer:
-	go build -o bin/dynamic-analyzer ./cmd/dynamic-analyzer/...
+	cd cmd/dynamic-analyzer; go build -o ../../bin/dynamic-analyzer ./... ;cd ../..
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet

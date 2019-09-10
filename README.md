@@ -23,6 +23,7 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 - API testing with JMeter and ZAP
 - API Security testing based on OpenAPI
 - Parameterized security payload with fuzz
+- Automaged SQLi testing usign SQLmap
 
 ## Structure of the DAST operator:
 DAST operator running two reconcilers and one [validating admission webhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
