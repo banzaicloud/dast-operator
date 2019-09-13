@@ -1,13 +1,7 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: zapproxy
----
 apiVersion: security.banzaicloud.io/v1alpha1
 kind: Dast
 metadata:
   name: dast-sample
-  namespace: zapproxy
 spec:
   zapproxy:
     name: dast-test

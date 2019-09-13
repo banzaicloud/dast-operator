@@ -2,7 +2,6 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: test-ingress
-  namespace: test
   annotations:
     dast.security.banzaicloud.io/medium: "2"
     dast.security.banzaicloud.io/low: "5"
