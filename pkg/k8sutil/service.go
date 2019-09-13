@@ -79,7 +79,7 @@ func GetServiceAnotations(service *corev1.Service, log logr.Logger) (map[string]
 	zapProxyCfg := map[string]string{}
 	if zapProxyName, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
 		zapProxyCfg["name"] = zapProxyName
-		zapProxyCfg["namespace"], ok = annotations["dast.security.banzaicloud.io/zapproxy_namespace"]
+		zapProxyCfg["namespace"], ok = annotations["dast.security.banzaicloud.io/zapproxy-namespace"]
 		if !ok {
 			zapProxyCfg["namespace"] = service.GetNamespace()
 			log.Info("missing zapproxy namespace annotation, using service namespace", "ns_name", zapProxyCfg["namespace"])
