@@ -8,9 +8,22 @@ CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 all: manager
 
+
+# Install kustomize
+install-kustomize:
+	@ if ! which bin/kustomize &>/dev/null; then\
+		scripts/install_kustomize.sh;\
+	fi
+
+# Install kubebuilder
+install-kubebuilder:
+	@ if ! which bin/kubebuilder/bin/kubebuilder &>/dev/null; then\
+		scripts/install_kubebuilder.sh;\
+	fi
+
 # Run tests
-test: generate fmt vet manifests
-	go test ./api/... ./controllers/... ./pkg/... ./webhooks/... -coverprofile cover.out
+test: install-kubebuilder generate fmt vet manifests
+	KUBEBUILDER_ASSETS="$${PWD}/bin/kubebuilder/bin" go test ./api/... ./controllers/... ./pkg/... ./webhooks/... -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
@@ -28,9 +41,9 @@ install: manifests
 	kubectl apply -f config/crd/bases
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
+deploy: install-kustomize manifests
 	kubectl apply -f config/crd/bases
-	kustomize build config/default | kubectl apply -f -
+	./bin/kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
