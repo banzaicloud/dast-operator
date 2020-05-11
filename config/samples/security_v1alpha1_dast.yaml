@@ -3,6 +3,5 @@ kind: Dast
 metadata:
   name: dast-sample
 spec:
-  zapproxy:
-    name: dast-test
-    apikey: abcd1234
+  # Add fields here
+  foo: bar

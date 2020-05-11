@@ -3,14 +3,18 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: dasts.security.banzaicloud.io
 spec:
   group: security.banzaicloud.io
   names:
     kind: Dast
+    listKind: DastList
     plural: dasts
-  scope: ""
+    singular: dast
+  scope: Namespaced
   validation:
     openAPIV3Schema:
       description: Dast is the Schema for the dasts API
@@ -18,12 +22,12 @@ spec:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -46,19 +50,19 @@ spec:
                       description: 'APIVersion defines the versioned schema of this
                         representation of an object. Servers should convert recognized
                         schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                       type: string
                     kind:
                       description: 'Kind is a string value representing the REST resource
                         this object represents. Servers may infer this from the endpoint
                         the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                       type: string
                     metadata:
-                      description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+                      description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
                       type: object
                     spec:
-                      description: Spec defines the behavior of a service. https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+                      description: Spec defines the behavior of a service. https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
                       properties:
                         clusterIP:
                           description: 'clusterIP is the IP address of the service
@@ -108,6 +112,21 @@ spec:
                             and ExternalTrafficPolicy is set to Local.
                           format: int32
                           type: integer
+                        ipFamily:
+                          description: ipFamily specifies whether this Service has
+                            a preference for a particular IP family (e.g. IPv4 vs.
+                            IPv6).  If a specific IP family is requested, the clusterIP
+                            field will be allocated from that family, if it is available
+                            in the cluster.  If no IP family is requested, the cluster's
+                            primary IP family will be used. Other IP fields (loadBalancerIP,
+                            loadBalancerSourceRanges, externalIPs) and controllers
+                            which allocate external load-balancers should use the
+                            same IP family.  Endpoints for this Service will be of
+                            this family.  This field is immutable after creation.
+                            Assigning a ServiceIPFamily not available in the cluster
+                            (e.g. IPv6 in IPv4 only cluster) is an error condition
+                            and will fail during clusterIP assignment.
+                          type: string
                         loadBalancerIP:
                           description: 'Only applies to Service Type: LoadBalancer
                             LoadBalancer will get created with the IP specified in
@@ -132,12 +151,22 @@ spec:
                             description: ServicePort contains information on service's
                               port.
                             properties:
+                              appProtocol:
+                                description: The application protocol for this port.
+                                  This field follows standard Kubernetes label syntax.
+                                  Un-prefixed names are reserved for IANA standard
+                                  service names (as per RFC-6335 and http://www.iana.org/assignments/service-names).
+                                  Non-standard protocols should use prefixed names
+                                  such as mycompany.com/my-custom-protocol. Field
+                                  can be enabled with ServiceAppProtocol feature gate.
+                                type: string
                               name:
                                 description: The name of this port within the service.
                                   This must be a DNS_LABEL. All ports within a ServiceSpec
-                                  must have unique names. This maps to the 'Name'
-                                  field in EndpointPort objects. Optional if only
-                                  one ServicePort is defined on this service.
+                                  must have unique names. When considering the endpoints
+                                  for a Service, this must match the 'name' field
+                                  in the EndpointPort. Optional if only one ServicePort
+                                  is defined on this service.
                                 type: string
                               nodePort:
                                 description: 'The port on each node on which this
@@ -160,8 +189,8 @@ spec:
                                 type: string
                               targetPort:
                                 anyOf:
-                                - type: string
                                 - type: integer
+                                - type: string
                                 description: 'Number or name of the port to access
                                   on the pods targeted by the service. Number must
                                   be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
@@ -172,10 +201,15 @@ spec:
                                   for services with clusterIP=None, and should be
                                   omitted or set equal to the ''port'' field. More
                                   info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service'
+                                x-kubernetes-int-or-string: true
                             required:
                             - port
                             type: object
                           type: array
+                          x-kubernetes-list-map-keys:
+                          - port
+                          - protocol
+                          x-kubernetes-list-type: map
                         publishNotReadyAddresses:
                           description: publishNotReadyAddresses, when set to true,
                             indicates that DNS implementations must publish the notReadyAddresses
@@ -218,6 +252,24 @@ spec:
                                   type: integer
                               type: object
                           type: object
+                        topologyKeys:
+                          description: topologyKeys is a preference-order list of
+                            topology keys which implementations of services should
+                            use to preferentially sort endpoints when accessing this
+                            Service, it can not be used at the same time as externalTrafficPolicy=Local.
+                            Topology keys must be valid label keys and at most 16
+                            keys may be specified. Endpoints are chosen based on the
+                            first topology key with available backends. If this field
+                            is specified and all entries have no backends that match
+                            the topology of the client, the service has no backends
+                            for that client and connections should fail. The special
+                            value "*" may be used to mean "any topology". This catch-all
+                            value, if used, only makes sense as the last value in
+                            the list. If this is not specified or empty, no topology
+                            constraints will be applied.
+                          items:
+                            type: string
+                          type: array
                         type:
                           description: 'type determines how the Service is exposed.
                             Defaults to ClusterIP. Valid options are ExternalName,
@@ -237,7 +289,7 @@ spec:
                       type: object
                     status:
                       description: 'Most recently observed status of the service.
-                        Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status'
+                        Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status'
                       properties:
                         loadBalancer:
                           description: LoadBalancer contains the current status of
