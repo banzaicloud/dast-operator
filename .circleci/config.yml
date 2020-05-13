@@ -1,0 +1,20 @@
+version: 2.1
+orbs:
+  snyk: snyk/snyk@0.0.10
+
+jobs:
+  monitor:
+    docker:
+      - image: 'circleci/golang'
+    steps:
+      - checkout
+      - snyk/scan:
+          additional-arguments: "--prune-repeated-subdependencies"
+          monitor-on-build: true
+          fail-on-issues: false
+
+workflows:
+  snyk:
+    jobs:
+      - monitor:
+          context: snyk
