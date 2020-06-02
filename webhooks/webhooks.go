@@ -17,56 +17,157 @@ limitations under the License.
 package webhooks
 
 import (
-	"crypto/tls"
-	"flag"
+	"context"
 	"fmt"
-	"net"
 	"net/http"
+	"strconv"
 
+	"emperror.dev/emperror"
+	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
 	"github.com/go-logr/logr"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"github.com/spf13/cast"
+	"github.com/zaproxy/zap-api-go/zap"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/banzaicloud/dast-operator/webhooks/ingress"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-type IngressWH struct {
-	Client client.Client
-	Log    logr.Logger
+// +kubebuilder:webhook:path=/ingress,mutating=false,failurePolicy=fail,groups="extensions",resources=ingress,verbs=create,versions=v1beta1,name=dast.security.banzaicloud.io
+
+// NewIngressValidator creates new ingressValidator
+func NewIngressValidator(client client.Client, log logr.Logger) IngressValidator {
+	return &ingressValidator{
+		Client: client,
+		Log:    log,
+	}
 }
 
-type serverConfig struct {
-	certFile string
-	keyFile  string
-	port     int
+// IngressValidator implements Handler
+type IngressValidator interface {
+	Handle(context.Context, admission.Request) admission.Response
 }
 
-var parameters serverConfig
-
-func init() {
-	flag.IntVar(&parameters.port, "port", 8443, "Webhook server port.")
-	flag.StringVar(&parameters.certFile, "tlsCertFile", "/etc/webhook/certs/tls.crt", "File containing the x509 Certificate for HTTPS.")
-	flag.StringVar(&parameters.keyFile, "tlsKeyFile", "/etc/webhook/certs/tls.key", "File containing the x509 private key to --tlsCertFile.")
+type ingressValidator struct {
+	Client  client.Client
+	decoder *admission.Decoder
+	Log     logr.Logger
 }
 
-func (r *IngressWH) SetupWithManager(mgr ctrl.Manager) error {
-	return mgr.Add(r)
-}
+// ingressValidator mutates PersitentVolumeClaims.
+func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
+	ingress := &extv1beta1.Ingress{}
 
-func (r *IngressWH) Start(<-chan struct{}) error {
-	flag.Parse()
-
-	pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
+	err := a.decoder.Decode(req, ingress)
 	if err != nil {
-		r.Log.Error(err, "Failed to load key pair")
+		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	ln, _ := net.Listen("tcp", fmt.Sprintf(":%v", parameters.port))
-	httpServer := &http.Server{
-		Handler:   ingress.NewApp(r.Log, r.Client),
-		TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
-	}
-	r.Log.Info("starting the webhook.")
+	tresholds := getIngressTresholds(ingress)
 
-	return httpServer.ServeTLS(ln, "", "")
+	backendServices := k8sutil.GetIngressBackendServices(ingress, a.Log)
+	a.Log.Info("Services", "backend_services", backendServices)
+	ok, err := checkServices(backendServices, ingress.GetNamespace(), a.Log, a.Client, tresholds)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
+	if !ok {
+		return admission.Denied("scan results are above treshold")
+	}
+
+	return admission.Allowed("scan results are below treshold")
+
+}
+
+// InjectDecoder injects the decoder.
+func (a *ingressValidator) InjectDecoder(d *admission.Decoder) error {
+	a.decoder = d
+	return nil
+}
+
+func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client, tresholds map[string]int) (bool, error) {
+	for _, service := range services {
+		k8sService, err := k8sutil.GetServiceByName(service["name"], namespace, client)
+		if err != nil {
+			return false, err
+		}
+		zapProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
+		if err != nil {
+			return false, err
+		}
+		secret, err := k8sutil.GetSercretByName(zapProxyCfg["name"], zapProxyCfg["namespace"], client, log)
+		if err != nil {
+			return false, err
+		}
+
+		// TODO check scan status and wait for end of progress
+		// check the scanner job is running, completed or not exist
+
+		zapCore, err := newZapClient(zapProxyCfg["name"], zapProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
+		if err != nil {
+			return false, err
+		}
+		summary, err := getServiceScanSummary(service, namespace, zapCore, log)
+		if err != nil {
+			return false, err
+		}
+
+		s, err := cast.ToStringMapIntE(summary["alertsSummary"])
+		if err != nil {
+			return false, err
+		}
+		for key, value := range s {
+			if value > tresholds[key] {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
+}
+
+func getIngressTresholds(ingress *extv1beta1.Ingress) map[string]int {
+	annotations := ingress.GetAnnotations()
+	treshold := map[string]int{
+		"High":          0,
+		"Medium":        0,
+		"Low":           0,
+		"Informational": 0,
+	}
+	if high, ok := annotations["dast.security.banzaicloud.io/high"]; ok {
+		treshold["High"], _ = strconv.Atoi(high)
+	}
+	if medium, ok := annotations["dast.security.banzaicloud.io/medium"]; ok {
+		treshold["Medium"], _ = strconv.Atoi(medium)
+	}
+	if low, ok := annotations["dast.security.banzaicloud.io/low"]; ok {
+		treshold["Low"], _ = strconv.Atoi(low)
+	}
+	if informational, ok := annotations["dast.security.banzaicloud.io/informational"]; ok {
+		treshold["Informational"], _ = strconv.Atoi(informational)
+	}
+	return treshold
+}
+
+// TODO refactor to pkg
+func getServiceScanSummary(service map[string]string, namespace string, zapCore *zap.Core, log logr.Logger) (map[string]interface{}, error) {
+	target := fmt.Sprintf("http://%s.%s.svc.cluster.local:%s", service["name"], namespace, service["port"])
+	log.Info("Target", "url", target)
+	summary, err := zapCore.AlertsSummary(target)
+	if err != nil {
+		return nil, emperror.Wrap(err, "failed to get service summary from ZapProxy")
+	}
+	log.Info("Tresholds", "summary", summary)
+	return summary, nil
+}
+
+func newZapClient(zapAddr, zapNamespace, apiKey string, log logr.Logger) (*zap.Core, error) {
+	// TODO use https
+	cfg := &zap.Config{
+		Proxy:  "http://" + zapAddr + "." + zapNamespace + ".svc.cluster.local:8080",
+		APIKey: apiKey,
+	}
+	client, err := zap.NewClient(cfg)
+	if err != nil {
+		return nil, emperror.Wrap(err, "failed to create zap interface")
+	}
+	return client.Core(), nil
 }

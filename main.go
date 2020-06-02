@@ -29,6 +29,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 	"github.com/banzaicloud/dast-operator/controllers"
@@ -91,14 +92,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
-	err = (&webhooks.IngressWH{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("webhooks").WithName("Ingress"),
-	}).SetupWithManager(mgr)
-	if err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Ingress")
-		os.Exit(1)
+
+	// Setup webhooks
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		setupLog.Info("setting up webhook server")
+		hookServer := mgr.GetWebhookServer()
+
+		setupLog.Info("registering webhooks to the webhook server")
+		hookServer.Register("/validate-ingress", &webhook.Admission{Handler: webhooks.NewIngressValidator(mgr.GetClient(), ctrl.Log.WithName("webhooks").WithName("Ingress"))})
 	}
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
