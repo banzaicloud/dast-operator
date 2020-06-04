@@ -34,35 +34,44 @@ var apiKey string
 var serve bool
 var openapiURL string
 
-var scannerCmd = &cobra.Command{
-	Use:   "scanner",
-	Short: "Scanner application using Zap",
-	Run: func(cmd *cobra.Command, args []string) {
-		scanner()
-	},
+func NewScannerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "scanner",
+		Short: "Scanner application using Zap",
+		Run: func(cmd *cobra.Command, args []string) {
+			scanner()
+		},
+	}
+
+	cmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
+	cmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
+	cmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
+	cmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
+
+	return cmd
 }
 
-var apiScannerCmd = &cobra.Command{
-	Use:   "apiscan",
-	Short: "API scanner application using Zap",
-	Run: func(cmd *cobra.Command, args []string) {
-		apiScanner()
-	},
+func NewApiScannerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "apiscan",
+		Short: "API scanner application using Zap",
+		Run: func(cmd *cobra.Command, args []string) {
+			apiScanner()
+		},
+	}
+
+	cmd.Flags().StringVarP(&openapiURL, "openapi", "o", "http://127.0.0.1:8090/swagger.yaml", "Openapi url")
+	cmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
+	cmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
+	cmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
+	cmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
+
+	return cmd
 }
 
 func init() {
-	scannerCmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
-	scannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
-	scannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
-	scannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
-	rootCmd.AddCommand(scannerCmd)
-
-	apiScannerCmd.Flags().StringVarP(&openapiURL, "openapi", "o", "http://127.0.0.1:8090/swagger.yaml", "Openapi url")
-	apiScannerCmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
-	apiScannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
-	apiScannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
-	apiScannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
-	rootCmd.AddCommand(apiScannerCmd)
+	rootCmd.AddCommand(NewScannerCmd())
+	rootCmd.AddCommand(NewApiScannerCmd())
 
 }
 
