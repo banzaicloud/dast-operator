@@ -32,6 +32,7 @@ var zapAddr string
 var target string
 var apiKey string
 var serve bool
+var openapiURL string
 
 var scannerCmd = &cobra.Command{
 	Use:   "scanner",
@@ -41,12 +42,23 @@ var scannerCmd = &cobra.Command{
 	},
 }
 
+var apiScannerCmd = &cobra.Command{
+	Use:   "apiscan",
+	Short: "API scanner application using Zap",
+	Run: func(cmd *cobra.Command, args []string) {
+		apiScanner()
+	},
+}
+
 func init() {
 	scannerCmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
 	scannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
 	scannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
 	scannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
+	scannerCmd.Flags().StringVarP(&openapiURL, "openapi", "o", "http://127.0.0.1:8090/swagger.yaml", "Openapi url")
 	rootCmd.AddCommand(scannerCmd)
+	rootCmd.AddCommand(apiScannerCmd)
+
 }
 
 func scanner() {
@@ -116,4 +128,58 @@ func scanner() {
 	if serve {
 		serveResults(jsonString)
 	}
+}
+
+func apiScanner() {
+	cfg := &zap.Config{
+		Proxy:  zapAddr,
+		APIKey: apiKey,
+	}
+	client, err := zap.NewClient(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Enable scripts
+	client.Script().Load("Alert_on_HTTP_Response_Code_Errors.js", "httpsender", "Oracle Nashorn", "/home/zap/.ZAP_D/scripts/scripts/httpsender/Alert_on_HTTP_Response_Code_Errors.js", "", "")
+	client.Script().Enable("Alert_on_HTTP_Response_Code_Errors.js")
+	client.Script().Load("Alert_on_Unexpected_Content_Types.js", "httpsender", "Oracle Nashorn", "/home/zap/.ZAP_D/scripts/scripts/httpsender/Alert_on_Unexpected_Content_Types.js", "", "")
+	client.Script().Enable("Alert_on_Unexpected_Content_Types.js")
+
+	client.Openapi().ImportUrl(openapiURL, target)
+	urls, err := client.Core().Urls(target)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(urls) == 0 {
+		log.Print("Failed to import any URLs")
+	}
+	resp, err := client.Ascan().Scan(target, "True", "False", "", "", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// The scan now returns a scan id to support concurrent scanning
+	scanid := resp["scan"].(string)
+	for {
+		time.Sleep(5000 * time.Millisecond)
+		resp, _ = client.Ascan().Status(scanid)
+		progress, _ := strconv.Atoi(resp["status"].(string))
+		fmt.Printf("Active API Scan progress : %d\n", progress)
+		if progress >= 100 {
+			break
+		}
+	}
+	fmt.Println("Active API Scan complete")
+	fmt.Println("Alerts:")
+	alerts, err := client.Core().Alerts(target, "", "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	summary, err := client.Core().AlertsSummary(target)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("alerts: %v", alerts)
+	fmt.Printf("summary: %v", summary)
 }

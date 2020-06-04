@@ -51,7 +51,7 @@ make docker-analyzer
 ## Deploy operartor
 Deploy CRD and `dast-operator` to `system` namespace.
 ```shell
-kubectl apply -f config/crd/bases/security.banzaicloud.io_dasts.yaml 
+kubectl apply -f config/crd/bases/security.banzaicloud.io_dasts.yaml
 kubectl apply -f config/manager/manager.yaml
 ```
 
@@ -76,10 +76,10 @@ spec:
     apikey: abcd1234
 ```
 
-### Deploy application and initiate active scan 
+### Deploy application and initiate active scan
 ```shell
 kubectl create ns test
-kubectl apply -f config/samples/test_secvice.yaml -n test
+kubectl apply -f config/samples/test_service.yaml -n test
 ```
 
 Contetnt of `test_secvice.yaml`:

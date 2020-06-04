@@ -23,3 +23,5 @@ bin
 *.swo
 *~
 main
+cmd/dynamic-analyzer/dynamic-analyzer
+dast-operator
