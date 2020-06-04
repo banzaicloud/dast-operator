@@ -8,20 +8,17 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 - Deploy OWASP ZAP proxy defined in custom resource
 - Scan external URL defined in custom resource
 - Scan internal services based on its annotations
+- API Security testing based on OpenAPI
 - Before deploying ingress, check backend services whether scanned and scan results are below defined tresholds
 
 ### On the DAST operator roadmap:
-**Short term small improvements:**
 - In webhook, check the scanner job is running, completed or not exist
 - Improve service status check
 - Handle multiple service ports
 - Handle different service protocols
 - Use HTTPS insted of HTTP connecting to ZAP
 - Generate randomly ZAP API key if not defied
-
-**Long term new feaures:**
 - API testing with JMeter and ZAP
-- API Security testing based on OpenAPI
 - Parameterized security payload with fuzz
 - Automaged SQLi testing usign SQLmap
 
