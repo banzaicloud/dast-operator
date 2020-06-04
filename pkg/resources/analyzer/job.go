@@ -18,6 +18,7 @@ package analyzer
 
 import (
 	"github.com/go-logr/logr"
+	"istio.io/pkg/log"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,42 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 		ownerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast"))}
 	}
 
+	annotations := dast.Spec.Analyzer.Service.GetAnnotations()
+
+	command := []string{
+		"/dynamic-analyzer",
+		"scanner",
+		"-t",
+		dast.Spec.Analyzer.Target,
+		"-p",
+		// TODO use https
+		"http://" + dast.Spec.ZapProxy.Name + ":8080",
+	}
+
+	apiScan, ok := annotations["dast.security.banzaicloud.io/apiscan"]
+	if ok {
+		if apiScan == "true" {
+			log.Info("apiscan enabled")
+			openapiURL, ok := annotations["dast.security.banzaicloud.io/openapi-url"]
+			if ok {
+				log.Info("openapi url is defined")
+				command = []string{
+					"/dynamic-analyzer",
+					"apiscan",
+					"-t",
+					dast.Spec.Analyzer.Target,
+					"-o",
+					openapiURL,
+					"-p",
+					// TODO use https
+					"http://" + dast.Spec.ZapProxy.Name + ":8080",
+				}
+			} else {
+				log.Info("openapi url is missing")
+			}
+		}
+	}
+
 	backofflimit := int32(5)
 	completion := int32(1)
 	return &batchv1.Job{
@@ -60,16 +97,8 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 							Name:            dast.Spec.Analyzer.Name,
 							Image:           dast.Spec.Analyzer.Image,
 							ImagePullPolicy: "IfNotPresent",
-							Command: []string{
-								"/dynamic-analyzer",
-								"scanner",
-								"-t",
-								dast.Spec.Analyzer.Target,
-								"-p",
-								// TODO use https
-								"http://" + dast.Spec.ZapProxy.Name + ":8080",
-							},
-							Env: withEnv(dast),
+							Command:         command,
+							Env:             withEnv(dast),
 						},
 					},
 				},

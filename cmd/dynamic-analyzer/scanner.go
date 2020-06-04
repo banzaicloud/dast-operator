@@ -55,8 +55,13 @@ func init() {
 	scannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
 	scannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
 	scannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
-	scannerCmd.Flags().StringVarP(&openapiURL, "openapi", "o", "http://127.0.0.1:8090/swagger.yaml", "Openapi url")
 	rootCmd.AddCommand(scannerCmd)
+
+	apiScannerCmd.Flags().StringVarP(&openapiURL, "openapi", "o", "http://127.0.0.1:8090/swagger.yaml", "Openapi url")
+	apiScannerCmd.Flags().StringVarP(&zapAddr, "zap-proxy", "p", "http://127.0.0.1:8080", "Zap proxy address")
+	apiScannerCmd.Flags().StringVarP(&target, "target", "t", "http://127.0.0.1:8090/target", "Target address")
+	apiScannerCmd.Flags().StringVarP(&apiKey, "apikey", "a", os.Getenv("ZAPAPIKEY"), "Zap api key")
+	apiScannerCmd.Flags().BoolVarP(&serve, "serve", "s", false, "serve results")
 	rootCmd.AddCommand(apiScannerCmd)
 
 }
@@ -141,12 +146,17 @@ func apiScanner() {
 	}
 
 	// Enable scripts
+	fmt.Println("Loading scripsts...")
 	client.Script().Load("Alert_on_HTTP_Response_Code_Errors.js", "httpsender", "Oracle Nashorn", "/home/zap/.ZAP_D/scripts/scripts/httpsender/Alert_on_HTTP_Response_Code_Errors.js", "", "")
 	client.Script().Enable("Alert_on_HTTP_Response_Code_Errors.js")
 	client.Script().Load("Alert_on_Unexpected_Content_Types.js", "httpsender", "Oracle Nashorn", "/home/zap/.ZAP_D/scripts/scripts/httpsender/Alert_on_Unexpected_Content_Types.js", "", "")
 	client.Script().Enable("Alert_on_Unexpected_Content_Types.js")
 
-	client.Openapi().ImportUrl(openapiURL, target)
+	fmt.Println("Importing openapi URL...")
+	_, err = client.Openapi().ImportUrl(openapiURL, target)
+	if err != nil {
+		log.Fatal(err)
+	}
 	urls, err := client.Core().Urls(target)
 	if err != nil {
 		log.Fatal(err)
@@ -155,6 +165,7 @@ func apiScanner() {
 	if len(urls) == 0 {
 		log.Print("Failed to import any URLs")
 	}
+
 	resp, err := client.Ascan().Scan(target, "True", "False", "", "", "", "")
 	if err != nil {
 		log.Fatal(err)

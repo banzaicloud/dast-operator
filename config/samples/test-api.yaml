@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-api-2
+  labels:
+    app: mga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mga2
+      secscan: dast
+  template:
+    metadata:
+      labels:
+        app: mga2
+        secscan: dast
+    spec:
+      containers:
+      - name: modern-go-application
+        image: sagikazarmark/modern-go-application:latest
+        command: ["modern-go-application"]
+        args: ["--telemetry-addr", ":10000", "--http-addr", ":8000", "--grpc-addr", ":8001", "--config", "/config/config.toml"]
+        ports:
+        - name: app
+          containerPort: 8000
+        - name: telemetry
+          containerPort: 10000
+        - name: grpc
+          containerPort: 8001
+        volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: mga-config
+            items:
+              - key: config.toml
+                path: config.toml
+---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: test-api-service2
+    annotations:
+      dast.security.banzaicloud.io/zapproxy: "dast-test"
+      dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+      dast.security.banzaicloud.io/apiscan: "true"
+      dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
+  spec:
+    selector:
+      app: mga2
+      secscan: dast
+    ports:
+    - port: 8000
+      targetPort: 8000
