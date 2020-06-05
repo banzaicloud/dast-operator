@@ -14,34 +14,47 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package zapproxy
+package zaproxy
 
 import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
-// service return a secret for zapproxy
-func (r *Reconciler) secret(log logr.Logger) runtime.Object {
+// service return a service for zaproxy
+func (r *Reconciler) service(log logr.Logger) runtime.Object {
 
-	return newSecret(r.Dast)
+	return newService(r.Dast)
 }
 
-func newSecret(dast *securityv1alpha1.Dast) *corev1.Secret {
-	return &corev1.Secret{
+func newService(dast *securityv1alpha1.Dast) *corev1.Service {
+	labels := map[string]string{
+		"app":        componentName,
+		"controller": dast.Name,
+	}
+	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dast.Spec.ZapProxy.Name,
+			Name:      dast.Spec.ZaProxy.Name,
 			Namespace: dast.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),
 			},
 		},
-		Data: map[string][]byte{
-			"zap_api_key": []byte(dast.Spec.ZapProxy.APIKey),
+		Spec: corev1.ServiceSpec{
+			Selector: labels,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Protocol:   "TCP",
+					Port:       8080,
+					TargetPort: intstr.IntOrString{IntVal: 8080},
+				},
+			},
 		},
 	}
 }

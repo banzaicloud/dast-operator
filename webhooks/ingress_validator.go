@@ -90,11 +90,11 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 		if err != nil {
 			return false, err
 		}
-		zapProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
+		zaProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
 		if err != nil {
 			return false, err
 		}
-		secret, err := k8sutil.GetSercretByName(zapProxyCfg["name"], zapProxyCfg["namespace"], client, log)
+		secret, err := k8sutil.GetSercretByName(zaProxyCfg["name"], zaProxyCfg["namespace"], client, log)
 		if err != nil {
 			return false, err
 		}
@@ -102,7 +102,7 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 		// TODO check scan status and wait for end of progress
 		// check the scanner job is running, completed or not exist
 
-		zapCore, err := newZapClient(zapProxyCfg["name"], zapProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
+		zapCore, err := newZapClient(zaProxyCfg["name"], zaProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
 		if err != nil {
 			return false, err
 		}
@@ -153,7 +153,7 @@ func getServiceScanSummary(service map[string]string, namespace string, zapCore 
 	log.Info("Target", "url", target)
 	summary, err := zapCore.AlertsSummary(target)
 	if err != nil {
-		return nil, emperror.Wrap(err, "failed to get service summary from ZapProxy")
+		return nil, emperror.Wrap(err, "failed to get service summary from ZaProxy")
 	}
 	log.Info("Tresholds", "summary", summary)
 	return summary, nil

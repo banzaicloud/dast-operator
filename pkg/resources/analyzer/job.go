@@ -51,7 +51,7 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 		dast.Spec.Analyzer.Target,
 		"-p",
 		// TODO use https
-		"http://" + dast.Spec.ZapProxy.Name + ":8080",
+		"http://" + dast.Spec.ZaProxy.Name + ":8080",
 	}
 
 	apiScan, ok := annotations["dast.security.banzaicloud.io/apiscan"]
@@ -70,7 +70,7 @@ func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
 					openapiURL,
 					"-p",
 					// TODO use https
-					"http://" + dast.Spec.ZapProxy.Name + ":8080",
+					"http://" + dast.Spec.ZaProxy.Name + ":8080",
 				}
 			} else {
 				log.Info("openapi url is missing")
@@ -114,7 +114,7 @@ func withEnv(dast *securityv1alpha1.Dast) []corev1.EnvVar {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: dast.Spec.ZapProxy.Name,
+						Name: dast.Spec.ZaProxy.Name,
 					},
 					Key: "zap_api_key",
 				},

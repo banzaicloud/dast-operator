@@ -57,7 +57,7 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	zapProxyCfg, err := k8sutil.GetServiceAnotations(&service, log)
+	zaProxyCfg, err := k8sutil.GetServiceAnotations(&service, log)
 	if err != nil {
 		return ctrl.Result{}, nil
 	}
@@ -67,14 +67,14 @@ func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ann := securityv1alpha1.Dast{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      service.GetName(),
-			Namespace: zapProxyCfg["namespace"],
+			Namespace: zaProxyCfg["namespace"],
 		},
 		Spec: securityv1alpha1.DastSpec{
-			ZapProxy: securityv1alpha1.ZapProxy{
-				Name: zapProxyCfg["name"],
+			ZaProxy: securityv1alpha1.ZaProxy{
+				Name: zaProxyCfg["name"],
 			},
 			Analyzer: securityv1alpha1.Analyzer{
-				Image:   zapProxyCfg["analyzer_image"],
+				Image:   zaProxyCfg["analyzer_image"],
 				Name:    service.GetName(),
 				Target:  k8sutil.GetTargetService(&service),
 				Service: &service,

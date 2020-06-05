@@ -44,8 +44,8 @@ spec:
   metadata:
     name: test-api-service
     annotations:
-      dast.security.banzaicloud.io/zapproxy: "dast-test"
-      dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+      dast.security.banzaicloud.io/zaproxy: "dast-test"
+      dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
       dast.security.banzaicloud.io/apiscan: "true"
       dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
   spec:

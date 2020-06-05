@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package zapproxy
+package zaproxy
 
 import (
 	"github.com/go-logr/logr"
@@ -27,11 +27,11 @@ import (
 )
 
 const (
-	componentName = "zapproxy"
+	componentName = "zaproxy"
 )
 
 var labelSelector = map[string]string{
-	"app": "zapproxy",
+	"app": "zaproxy",
 }
 
 // Reconciler implements the Component Reconciler
@@ -39,7 +39,7 @@ type Reconciler struct {
 	resources.Reconciler
 }
 
-// New creates a new reconciler for Zapproxy
+// New creates a new reconciler for Zaproxy
 func New(client client.Client, dast *securityv1alpha1.Dast) *Reconciler {
 	return &Reconciler{
 		Reconciler: resources.Reconciler{
@@ -49,7 +49,7 @@ func New(client client.Client, dast *securityv1alpha1.Dast) *Reconciler {
 	}
 }
 
-// Reconcile implements the reconcile logic for Zapproxy
+// Reconcile implements the reconcile logic for Zaproxy
 func (r *Reconciler) Reconcile(log logr.Logger) error {
 	log = log.WithValues("component", componentName)
 

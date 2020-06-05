@@ -204,6 +204,7 @@ spec:
                                 x-kubernetes-int-or-string: true
                             required:
                             - port
+                            - protocol
                             type: object
                           type: array
                           x-kubernetes-list-map-keys:
@@ -325,7 +326,7 @@ spec:
               - image
               - name
               type: object
-            zapproxy:
+            zaproxy:
               description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                 Important: Run "make" to regenerate code after modifying this file'
               properties:
@@ -345,7 +346,7 @@ spec:
               - name
               type: object
           required:
-          - zapproxy
+          - zaproxy
           type: object
         status:
           description: DastStatus defines the observed state of Dast

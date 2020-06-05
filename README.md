@@ -57,8 +57,8 @@ kubectl apply -f config/manager/manager.yaml
 ### Deploy OWASP ZAP
 Deploy example CR
 ```shell
-kubectl create ns zapproxy
-kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zapproxy
+kubectl create ns zaproxy
+kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zaproxy
 ```
 
 Content of Dast custom resource:
@@ -68,7 +68,7 @@ kind: Dast
 metadata:
   name: dast-sample
 spec:
-  zapproxy:
+  zaproxy:
     name: dast-test
     apikey: abcd1234
 ```
@@ -110,8 +110,8 @@ kind: Service
 metadata:
   name: test-service
   annotations:
-    dast.security.banzaicloud.io/zapproxy: "dast-test"
-    dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+    dast.security.banzaicloud.io/zaproxy: "dast-test"
+    dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
 spec:
   selector:
     app: nginx
@@ -167,7 +167,7 @@ kind: Dast
 metadata:
   name: dast-sample-external
 spec:
-  zapproxy:
+  zaproxy:
     name: dast-test-external
     apikey: abcd1234
   analyzer:
@@ -184,8 +184,8 @@ spec:
   metadata:
     name: test-api-service
     annotations:
-      dast.security.banzaicloud.io/zapproxy: "dast-test"
-      dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+      dast.security.banzaicloud.io/zaproxy: "dast-test"
+      dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
       dast.security.banzaicloud.io/apiscan: "true"
       dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
   spec:
