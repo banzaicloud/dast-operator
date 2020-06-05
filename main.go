@@ -99,7 +99,7 @@ func main() {
 		hookServer := mgr.GetWebhookServer()
 
 		setupLog.Info("registering webhooks to the webhook server")
-		hookServer.Register("/validate-ingress", &webhook.Admission{Handler: webhooks.NewIngressValidator(mgr.GetClient(), ctrl.Log.WithName("webhooks").WithName("Ingress"))})
+		hookServer.Register("/ingress", &webhook.Admission{Handler: webhooks.NewIngressValidator(mgr.GetClient(), ctrl.Log.WithName("webhooks").WithName("Ingress"))})
 	}
 
 	// +kubebuilder:scaffold:builder

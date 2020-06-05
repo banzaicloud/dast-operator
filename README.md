@@ -8,7 +8,7 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 - Deploy OWASP ZAP proxy defined in custom resource
 - Scan external URL defined in custom resource
 - Scan internal services based on its annotations
-- API Security testing based on OpenAPI
+- API Security testing based on OpenAPI definition
 - Before deploying ingress, check backend services whether scanned and scan results are below defined tresholds
 
 ### On the DAST operator roadmap:
@@ -174,4 +174,25 @@ spec:
     image: banzaicloud/dast-analyzer:latest
     name: external-test
     target: http://example.com
+```
+
+
+### Defin OpenAPI definition as annotation in a service
+```yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: test-api-service
+    annotations:
+      dast.security.banzaicloud.io/zapproxy: "dast-test"
+      dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+      dast.security.banzaicloud.io/apiscan: "true"
+      dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
+  spec:
+    selector:
+      app: mga
+      secscan: dast
+    ports:
+    - port: 8000
+      targetPort: 8000
 ```

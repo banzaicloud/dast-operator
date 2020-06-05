@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: test-api-2
+  name: test-api
   labels:
     app: mga
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mga2
+      app: mga
       secscan: dast
   template:
     metadata:
       labels:
-        app: mga2
+        app: mga
         secscan: dast
     spec:
       containers:
@@ -42,7 +42,7 @@ spec:
   apiVersion: v1
   kind: Service
   metadata:
-    name: test-api-service2
+    name: test-api-service
     annotations:
       dast.security.banzaicloud.io/zapproxy: "dast-test"
       dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
@@ -50,7 +50,7 @@ spec:
       dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
   spec:
     selector:
-      app: mga2
+      app: mga
       secscan: dast
     ports:
     - port: 8000

@@ -22,4 +22,4 @@ webhooks:
     operations:
     - CREATE
     resources:
-    - ingress
+    - ingresses

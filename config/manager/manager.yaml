@@ -30,9 +30,6 @@ spec:
         image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager
-        env:
-        - name: ENABLE_WEBHOOKS
-          value: "false"
         resources:
           limits:
             cpu: 100m
