@@ -331,6 +331,10 @@ spec:
               properties:
                 apikey:
                   type: string
+                config:
+                  items:
+                    type: string
+                  type: array
                 image:
                   type: string
                 name:

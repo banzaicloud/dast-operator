@@ -70,20 +70,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 							Name:    "zap-proxy",
 							Image:   zapImage,
 							Command: []string{"zap.sh"},
-							Args: []string{
-								"-daemon",
-								"-host",
-								"0.0.0.0",
-								"-port",
-								"8080",
-								"-config",
-								// TODO use generated API key
-								"api.key=" + dast.Spec.ZapProxy.APIKey,
-								"-config",
-								"api.addrs.addr.name=.*",
-								"-config",
-								"api.addrs.addr.regex=true",
-							},
+							Args:    renderArgs(dast.Spec.ZapProxy),
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
@@ -98,8 +85,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 										Port: intstr.IntOrString{IntVal: 8080},
 										HTTPHeaders: []corev1.HTTPHeader{
 											{
-												Name: "X-ZAP-API-Key",
-												// TODO use generated API key
+												Name:  "X-ZAP-API-Key",
 												Value: dast.Spec.ZapProxy.APIKey,
 											},
 										},
@@ -114,4 +100,28 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 			},
 		},
 	}
+}
+
+func renderArgs(zapProxy securityv1alpha1.ZapProxy) []string {
+	args := []string{
+		"-daemon",
+		"-host",
+		"0.0.0.0",
+		"-port",
+		"8080",
+		"-config",
+		"api.key=" + zapProxy.APIKey,
+		"-config",
+		"api.addrs.addr.name=.*",
+		"-config",
+		"api.addrs.addr.regex=true",
+	}
+
+	if zapProxy.Config != nil {
+		for _, config := range zapProxy.Config {
+			args = append(args, []string{"-config", config}...)
+		}
+	}
+
+	return args
 }
