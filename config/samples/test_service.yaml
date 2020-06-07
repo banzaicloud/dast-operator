@@ -29,8 +29,8 @@ metadata:
   name: test-service
   namespace: test
   annotations:
-    dast.security.banzaicloud.io/zapproxy: "dast-test"
-    dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+    dast.security.banzaicloud.io/zaproxy: "dast-test"
+    dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
 spec:
   selector:
     app: nginx
