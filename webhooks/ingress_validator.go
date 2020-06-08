@@ -42,7 +42,7 @@ func NewIngressValidator(client client.Client, log logr.Logger) IngressValidator
 	}
 }
 
-// IngressValidator implements Handler
+// IngressValidator implements Handle
 type IngressValidator interface {
 	Handle(context.Context, admission.Request) admission.Response
 }
@@ -53,7 +53,7 @@ type ingressValidator struct {
 	Log     logr.Logger
 }
 
-// ingressValidator mutates PersitentVolumeClaims.
+// ingressValidator validates ingress.
 func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	ingress := &extv1beta1.Ingress{}
 
