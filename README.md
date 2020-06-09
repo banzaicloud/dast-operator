@@ -45,11 +45,34 @@ make docker-build
 make docker-analyzer
 ```
 
-## Deploy operartor
-Deploy CRD and `dast-operator` to `system` namespace.
+If you're using `Kind` cluster for testing, you will have to load images to it.
 ```shell
-kubectl apply -f config/crd/bases/security.banzaicloud.io_dasts.yaml
-kubectl apply -f config/manager/manager.yaml
+kind load docker-image banzaicloud/dast-operator:latest
+kind load docker-image banzaicloud/dast-analyzer:latest
+```
+
+## Deploying the operator
+
+First of all we need to deploy the `cert-manager`
+```shell
+kubectl create namespace cert-manager
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
+```
+
+You can read more about installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
+
+Clone dast-operator
+```shell
+git clone https://github.com/banzaicloud/dast-operator.git
+cd dast-operator
+```
+
+Deploy dast-operator
+```shell
+make deploy
 ```
 
 ## Examples
@@ -121,11 +144,7 @@ spec:
     targetPort: 80
 ```
 
-### Deploy and test validating webhook
-Deploy ValidatingWebhookConfiguration and webhook service
-```shell
-kubectl apply -f config/samples/webhook_config.yaml
-```
+### Test the validating webhook
 
 Deploy ingress with previous defined `test-service` backend.
 ```shell
