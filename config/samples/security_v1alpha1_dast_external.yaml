@@ -3,7 +3,7 @@ kind: Dast
 metadata:
   name: dast-sample-external
 spec:
-  zapproxy:
+  zaproxy:
     name: dast-test-external
     apikey: abcd1234
   analyzer:

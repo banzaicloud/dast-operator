@@ -76,20 +76,20 @@ func GetServiceByName(name, namespace string, client client.Client) (*corev1.Ser
 
 func GetServiceAnotations(service *corev1.Service, log logr.Logger) (map[string]string, error) {
 	annotations := service.GetAnnotations()
-	zapProxyCfg := map[string]string{}
-	if zapProxyName, ok := annotations["dast.security.banzaicloud.io/zapproxy"]; ok {
-		zapProxyCfg["name"] = zapProxyName
-		zapProxyCfg["namespace"], ok = annotations["dast.security.banzaicloud.io/zapproxy-namespace"]
+	zaProxyCfg := map[string]string{}
+	if zaproxyName, ok := annotations["dast.security.banzaicloud.io/zaproxy"]; ok {
+		zaProxyCfg["name"] = zaproxyName
+		zaProxyCfg["namespace"], ok = annotations["dast.security.banzaicloud.io/zaproxy-namespace"]
 		if !ok {
-			zapProxyCfg["namespace"] = service.GetNamespace()
-			log.Info("missing zapproxy namespace annotation, using service namespace", "ns_name", zapProxyCfg["namespace"])
+			zaProxyCfg["namespace"] = service.GetNamespace()
+			log.Info("missing zaproxy namespace annotation, using service namespace", "ns_name", zaProxyCfg["namespace"])
 		}
-		zapProxyCfg["analyzer_image"], ok = annotations["dast.security.banzaicloud.io/analyzer_image"]
+		zaProxyCfg["analyzer_image"], ok = annotations["dast.security.banzaicloud.io/analyzer_image"]
 		if !ok {
-			zapProxyCfg["analyzer_image"] = "banzaicloud/dast-analyzer:latest"
-			log.Info("missing zapproxy analyzer image annotation, using ", "analyzer_image", zapProxyCfg["analyzer_image"])
+			zaProxyCfg["analyzer_image"] = "banzaicloud/dast-analyzer:latest"
+			log.Info("missing zaproxy analyzer image annotation, using ", "analyzer_image", zaProxyCfg["analyzer_image"])
 		}
-		return zapProxyCfg, nil
+		return zaProxyCfg, nil
 	}
 
 	return nil, errors.New("service isn't annotated")

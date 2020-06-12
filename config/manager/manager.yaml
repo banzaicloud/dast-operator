@@ -2,66 +2,32 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: dast-operator
-    controller-tools.k8s.io: "1.0"
+    control-plane: controller-manager
   name: system
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: webhook-secret
-  namespace: system
-type: kubernetes.io/tls
-data:
-  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUQ3ekNDQXRlZ0F3SUJBZ0lKQU1RUHF4ZXlDTElkTUEwR0NTcUdTSWIzRFFFQkN3VUFNRTR4Q3pBSkJnTlYKQkFZVEFsVlRNUk13RVFZRFZRUUlEQXBEWVd4cFptOXlibWxoTVJJd0VBWURWUVFIREFsVWFHVWdRMnh2ZFdReApGakFVQmdOVkJBb01EVTE1SUVOdmJYQmhibmtnUTBFd0hoY05NVGt3T1RFeU1UTTBPRFF3V2hjTk1qQXdNVEV3Ck1UTTBPRFF3V2pCZU1Rc3dDUVlEVlFRR0V3SlZVekVUTUJFR0ExVUVDQXdLUTJGc2FXWnZjbTVwWVRFU01CQUcKQTFVRUJ3d0pWR2hsSUVOc2IzVmtNUTB3Q3dZRFZRUUtEQVJFWlcxdk1SY3dGUVlEVlFRRERBNU5lU0JEWlhKMAphV1pwWTJGMFpUQ0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUwzUFJmcjdwbG5oCjdMRTRiNnU1MGhwaW1qWktSQ3k3MUZoeStoRmFJUE1ISHdKWTR4SWozWlQ2MDVrb1ZxT1h2UXA4YjZYSVJ3cncKSTdXS1JaaW5nMTE2ZDNKd2VuZXFwclZoS0U3bTJmNFYrWmhwRkhuMHV2M3lIcTFRK0g3V3FWZFFLMW93cENHVQpJaXlFYVJieG94NHZCVFl1MFRraE1GWXc1S0RQTUpqSllDUkZTNTlSV2xOcks4bGp3MC9XVWZPdlVKNWRwU255Cm94TmpiTWczajAzMUthSCt5ajl3S1hMUlZjcTdoanFsNmFLRmR0MnFqWUNObW8rZUpWaXpNOFBsNWpvVnFmaEYKREVWam5VcWNmb2xBMzRENG5xYkV3Y0pIODhTVGoxeTVSOFVyVHlrSGZqV3ZuTG5WSHF6RFZPaGVieFVWKzJTOQpDd0Jmb1Z1Slo3RUNBd0VBQWFPQnZ6Q0J2REFKQmdOVkhSTUVBakFBTUIwR0ExVWREZ1FXQkJSbEd6cW1vTWFPCjZGcVZhcVQ3ejdsS24xUnF1REFMQmdOVkhROEVCQU1DQmFBd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3SUcKQ0NzR0FRVUZCd01CTUdRR0ExVWRFUVJkTUZ1SEJBRUNBd1NDRG5kbFltaHZiMnN0YzJWeWRtVnlnaWQzWldKbwpiMjlyTFhObGNuWmxjaTV6ZVhOMFpXMHVjM1pqTG1Oc2RYTjBaWEl1Ykc5allXeUNHbmRsWW1odmIyc3RjMlZ5CmRtbGpaUzV6ZVhOMFpXMHVjM1pqTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFCcVdwcE5VQlU2QnorN2M2bTMKQkJWU2RveGpKbVd2aWVlK2lWN1dUNDNZcTB3b041RkdtbnVMelNSOGVFNTBIVWFFL3E2QnR5TlpzUUVZNjRSaApSMXdZSHJ3N29YaE0yMlhvZkNWU0ZnV1ZNL2RCTWI5K0k1czR6NE5odHQxVi80SlBjckhTeG8wRmtSV0J1UzFOCjJ5ZmpKU2QzYVNvOFl4NUZxNW9oUVhyRy9LdTBaeTVPbG9ZNm9nYW0vVGFJN3NSblZOS08yc3Y5cithU3hXZTEKZkhSem9wemp4M2hUckM1RXMvQkxrank1dHdDcHdjQVIvL0h4UHZIaGhxRDNVNEp0ZnZjZUVBY281cmpXMC9XNAo0R0t1NXlRR0FpeXJmZndFVlBOck5NSjVjdE5jMkVZd2JVMStzWkhPZW5xYklBVTUwU0poUi82cjUxNmVLdUsrClc2Ri8KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb2dJQkFBS0NBUUVBdmM5Rit2dW1XZUhzc1RodnE3blNHbUthTmtwRUxMdlVXSEw2RVZvZzh3Y2ZBbGpqCkVpUGRsUHJUbVNoV281ZTlDbnh2cGNoSEN2QWp0WXBGbUtlRFhYcDNjbkI2ZDZxbXRXRW9UdWJaL2hYNW1Ha1UKZWZTNi9mSWVyVkQ0ZnRhcFYxQXJXakNrSVpRaUxJUnBGdkdqSGk4Rk5pN1JPU0V3VmpEa29NOHdtTWxnSkVWTApuMUZhVTJzcnlXUERUOVpSODY5UW5sMmxLZktqRTJOc3lEZVBUZlVwb2Y3S1AzQXBjdEZWeXJ1R09xWHBvb1YyCjNhcU5nSTJhajU0bFdMTXp3K1htT2hXcCtFVU1SV09kU3B4K2lVRGZnUGllcHNUQndrZnp4Sk9QWExsSHhTdFAKS1FkK05hK2N1ZFVlck1OVTZGNXZGUlg3WkwwTEFGK2hXNGxuc1FJREFRQUJBb0lCQUZmNmdCeGlrbXV0RFpIagpiOWR3TFJPdnluMEpsV29Lc2RWQmplbUhGaWl2ajA3K05sb05KOExMTkZNVVlIdzVkQlV0TW03c1V3bWQzMTloCk5Qc2FBZ2pOSUJwNlNqbTNic2c1dlg0OUFLUUdPWWZNaFFJMlRvb3d0TWx1ODQrUEhqVHJZdnpOK1BYYmZLK1gKdkVJM1JIMVVIQjFPUEFvMytQaXFkdjZXcXBiV1N0RUhUaXFCT1NmdkZZZnQ1Nnc4Q0ZMZ2hrUVF5Vis1ODF0MgoyRGQwcS9LMVZyVjdyWGRFbjEyN3JBUVMvSk1heTRrempMck1WZ0tFbU5OQlQyRzAyVnU4ZTRaT25TTjJERmY0Ck5ybG1XdURoeGhEbDQ3ZzlTdnlyRXlUcXY1MUY3S25Eazk3VWo3ZmJqUlZrdVlHRDBoV3Exb0tVaE9rZFhaS1oKSHVTNU1nRUNnWUVBOWpjMmpkd3NSUldyS1Z4d3NIUTdLZHJlMlo0UldObmdjZ1FhU0lxY1dtaGxsNXhJL0wxSgpScnhjdWJiNnlRNFlaekxJOHpCbnE5UlVGNmZCS243cFZYZ0drRVFDdzIzQkJQQlkySEtnT3ArL21TVStta2tqCk1XeEF6bURlbVhLckNJODlyOG9IeTgwcmZTVkhNQUxZelNCRGFWNEZZL291eERybTlkNFpsU0VDZ1lFQXhWbzcKNEg1S0c0Ylk5N1N1RzJCMVkzeGNRZ0VvUGVvV2gvT1E4aW1POFBvVVJnckh2SnlqZUtyWndmNktnTVAwODJmNwpnR1ZHQ3g2OVova1AvRm5HSW1zMCtSNDJac3dueUoxNG15NkdxSDNTZllzN2Y5RnNndUMxaTNxN1JLMUZ3a2o3CkNKNG9wQ01ZM0FzWW8rS1lwUHFFNHQwNVZYM1YzSllKTkY2ZDhKRUNnWUIwcE9PcmdVdFh6MVF2WENQbTlLbXkKd29ZaEFzbWxGbE5Hc0xyaTh3ZnZyTlcwWmM0T0xuNndqRHhCbjNaZ0dkVmx6cUYwMU5ISWplYm83Z2lOWVdLWgpveXM0M1grUnBrVnpXWW85d05BMzljYUhmeVdSWW1UUjNUODJocDN1aEd5U3VZbTM1amFiVHEvenNkMXYyV2xzCmhJUnJQcWUvSFo5YVI2MXpmYTBSQVFLQmdHNW1taFJ0MFpzd2huT2J1Y0pLNWFCdjAxU0JQVGZWbWlFWG1rQSsKQzE2M0oxdy9iNWtOcjAwemxubTFvVm1EUmFaY3h3NyttSDVrQmVVQ0tYVXI2M0VadEJxZ1VpS1Rsclhka2JpTwpBSHFGV0prdXFHeEtoWDk1b1ZXVHBPczRXMHZpYzd4UWJiL1Vlbld1SjJ5V3VIbWlRM0I5L1RMY0lDVTBNWllBClVDNWhBb0dBWHpXMTBLQ0hLR0FpV1NPcW5rb0kwV292NWpMSTlsaWladzQ5Yk8yenoycExwMWFpblNXa3FLRm4KSklCcHFWMFRaOWMxK0dhRTJhcWNMUjVCS2swNlRKZUpONjBOdlZha1lYbUs0N2Z3SDlKMzdUQVFzdS8wZ1NOeAorK1diN3Zlcnl2ZE9xTlNNUWNFMGtWMjlCbVk5MGtjczZid0I1dWZLd3k2VUhtM1pWOVE9Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: webhook-service
-  namespace: system
-  labels:
-    control-plane: dast-operator
-    controller-tools.k8s.io: "1.0"
-spec:
-  selector:
-    control-plane: dast-operator
-    controller-tools.k8s.io: "1.0"
-  ports:
-  - port: 443
-    targetPort: 8443
----
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: dast-operator
+  name: controller-manager
   namespace: system
   labels:
-    control-plane: dast-operator
-    controller-tools.k8s.io: "1.0"
+    control-plane: controller-manager
 spec:
   selector:
     matchLabels:
-      control-plane: dast-operator
-      controller-tools.k8s.io: "1.0"
-  serviceName: dast-operator-service
+      control-plane: controller-manager
   replicas: 1
-  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
-        control-plane: dast-operator
-        controller-tools.k8s.io: "1.0"
+        control-plane: controller-manager
     spec:
-      volumes:
-        - name: webhook-certs
-          secret:
-            secretName: webhook-secret
       containers:
       - command:
-        - /dast-operator
-        image: banzaicloud/dast-operator:latest
+        - /manager
+        args:
+        - --enable-leader-election
+        image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager
         resources:
@@ -71,10 +37,4 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-        volumeMounts:
-          - name: webhook-certs
-            mountPath: /etc/webhook/certs
-            readOnly: true
-        ports:
-          - containerPort: 8443
       terminationGracePeriodSeconds: 10

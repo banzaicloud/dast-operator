@@ -14,70 +14,74 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package ingress
+package webhooks
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 
+	"emperror.dev/emperror"
+	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
 	"github.com/go-logr/logr"
-	"github.com/goph/emperror"
 	"github.com/spf13/cast"
 	"github.com/zaproxy/zap-api-go/zap"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/banzaicloud/dast-operator/pkg/k8sutil"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-func validate(ar *admissionv1beta1.AdmissionReview, log logr.Logger, client client.Client) *admissionv1beta1.AdmissionResponse {
-	req := ar.Request
-	log.Info("AdmissionReview for", "Kind", req.Kind, "Namespsce", req.Namespace, "Resource", req.Resource, "UserInfo", req.UserInfo)
+// +kubebuilder:webhook:path=/ingress,mutating=false,failurePolicy=fail,groups="extensions",resources=ingresses,verbs=create,versions=v1beta1,name=dast.security.banzaicloud.io
 
-	switch req.Kind.Kind {
-	case "Ingress":
-		var ingress extv1beta1.Ingress
-		if err := json.Unmarshal(req.Object.Raw, &ingress); err != nil {
-			log.Error(err, "could not unmarshal raw object")
-			return &admissionv1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-					Message: err.Error(),
-				},
-			}
-		}
-		tresholds := getIngressTresholds(&ingress)
+// NewIngressValidator creates new ingressValidator
+func NewIngressValidator(client client.Client, log logr.Logger) IngressValidator {
+	return &ingressValidator{
+		Client: client,
+		Log:    log,
+	}
+}
 
-		backendServices := k8sutil.GetIngressBackendServices(&ingress, log)
-		log.Info("Services", "backend_services", backendServices)
+// IngressValidator implements Handle
+type IngressValidator interface {
+	Handle(context.Context, admission.Request) admission.Response
+}
 
-		ok, err := checkServices(backendServices, ingress.GetNamespace(), log, client, tresholds)
-		if err != nil {
-			return &admissionv1beta1.AdmissionResponse{
-				Allowed: false,
-				Result: &metav1.Status{
-					Reason: metav1.StatusReason(err.Error()),
-				},
-			}
-		}
-		if !ok {
-			return &admissionv1beta1.AdmissionResponse{
-				Allowed: false,
-				Result: &metav1.Status{
-					Reason: "scan results are above treshold",
-				},
-			}
-		}
+type ingressValidator struct {
+	Client  client.Client
+	decoder *admission.Decoder
+	Log     logr.Logger
+}
+
+// ingressValidator validates ingress.
+func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
+	ingress := &extv1beta1.Ingress{}
+
+	err := a.decoder.Decode(req, ingress)
+	if err != nil {
+		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	return &admissionv1beta1.AdmissionResponse{
-		Allowed: true,
-		Result: &metav1.Status{
-			Reason: "scan results are below treshold",
-		},
+	tresholds := getIngressTresholds(ingress)
+
+	backendServices := k8sutil.GetIngressBackendServices(ingress, a.Log)
+	a.Log.Info("Services", "backend_services", backendServices)
+	ok, err := checkServices(backendServices, ingress.GetNamespace(), a.Log, a.Client, tresholds)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
 	}
+	if !ok {
+		return admission.Denied("scan results are above treshold")
+	}
+
+	return admission.Allowed("scan results are below treshold")
+
+}
+
+// InjectDecoder injects the decoder.
+func (a *ingressValidator) InjectDecoder(d *admission.Decoder) error {
+	a.decoder = d
+	return nil
 }
 
 func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client, tresholds map[string]int) (bool, error) {
@@ -86,11 +90,11 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 		if err != nil {
 			return false, err
 		}
-		zapProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
+		zaProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
 		if err != nil {
 			return false, err
 		}
-		secret, err := k8sutil.GetSercretByName(zapProxyCfg["name"], zapProxyCfg["namespace"], client, log)
+		secret, err := k8sutil.GetSercretByName(zaProxyCfg["name"], zaProxyCfg["namespace"], client, log)
 		if err != nil {
 			return false, err
 		}
@@ -98,7 +102,7 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 		// TODO check scan status and wait for end of progress
 		// check the scanner job is running, completed or not exist
 
-		zapCore, err := newZapClient(zapProxyCfg["name"], zapProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
+		zapCore, err := newZapClient(zaProxyCfg["name"], zaProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
 		if err != nil {
 			return false, err
 		}
@@ -149,7 +153,7 @@ func getServiceScanSummary(service map[string]string, namespace string, zapCore 
 	log.Info("Target", "url", target)
 	summary, err := zapCore.AlertsSummary(target)
 	if err != nil {
-		return nil, emperror.Wrap(err, "failed to get service summary from ZapProxy")
+		return nil, emperror.Wrap(err, "failed to get service summary from ZaProxy")
 	}
 	log.Info("Tresholds", "summary", summary)
 	return summary, nil

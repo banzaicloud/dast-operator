@@ -62,7 +62,7 @@ func (r *Reconciler) Reconcile(log logr.Logger) error {
 	log.V(1).Info("Reconciling")
 
 	key := types.NamespacedName{
-		Name:      r.Dast.Spec.ZapProxy.Name,
+		Name:      r.Dast.Spec.ZaProxy.Name,
 		Namespace: r.Dast.Namespace,
 	}
 

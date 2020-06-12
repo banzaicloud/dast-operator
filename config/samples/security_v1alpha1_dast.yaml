@@ -3,6 +3,6 @@ kind: Dast
 metadata:
   name: dast-sample
 spec:
-  zapproxy:
+  zaproxy:
     name: dast-test
     apikey: abcd1234

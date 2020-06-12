@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-api
+  labels:
+    app: mga
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mga
+      secscan: dast
+  template:
+    metadata:
+      labels:
+        app: mga
+        secscan: dast
+    spec:
+      containers:
+      - name: modern-go-application
+        image: sagikazarmark/modern-go-application:latest
+        command: ["modern-go-application"]
+        args: ["--telemetry-addr", ":10000", "--http-addr", ":8000", "--grpc-addr", ":8001", "--config", "/config/config.toml"]
+        ports:
+        - name: app
+          containerPort: 8000
+        - name: telemetry
+          containerPort: 10000
+        - name: grpc
+          containerPort: 8001
+        volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: mga-config
+            items:
+              - key: config.toml
+                path: config.toml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-api-service
+  annotations:
+    dast.security.banzaicloud.io/zaproxy: "dast-test"
+    dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
+    dast.security.banzaicloud.io/apiscan: "true"
+    dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
+spec:
+  selector:
+    app: mga
+    secscan: dast
+  ports:
+  - port: 8000
+    targetPort: 8000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mga-config
+data:
+  config.toml: |
+    [log]
+    format = "json"
+    level = "info"
+
+    [telemetry]
+    addr = ":10000"
+
+    [opencensus.exporter]
+    enabled = false
+    address = "127.0.0.1:55678"
+    insecure = false
+    reconnectPeriod = "5s"
+
+    [opencensus.trace]
+    sampling = { sampler = "always" }
+    # sampling = { sampler = "probability", fraction = 0.5 }
+
+    [opencensus.prometheus]
+    enabled = false
+
+    [app]
+    httpAddr = ":8000"
+    grpcAddr = ":8001"
+
+    storage = "inmemory"
+
+    [database]
+    host = "localhost"
+    port = 3306
+    user = "root"
+    pass = ""
+    name = "app"
+    params = { collation = "utf8mb4_general_ci" }

@@ -8,20 +8,17 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 - Deploy OWASP ZAP proxy defined in custom resource
 - Scan external URL defined in custom resource
 - Scan internal services based on its annotations
+- API Security testing based on OpenAPI definition
 - Before deploying ingress, check backend services whether scanned and scan results are below defined tresholds
 
 ### On the DAST operator roadmap:
-**Short term small improvements:**
 - In webhook, check the scanner job is running, completed or not exist
 - Improve service status check
 - Handle multiple service ports
 - Handle different service protocols
 - Use HTTPS insted of HTTP connecting to ZAP
 - Generate randomly ZAP API key if not defied
-
-**Long term new feaures:**
 - API testing with JMeter and ZAP
-- API Security testing based on OpenAPI
 - Parameterized security payload with fuzz
 - Automaged SQLi testing usign SQLmap
 
@@ -48,11 +45,34 @@ make docker-build
 make docker-analyzer
 ```
 
-## Deploy operartor
-Deploy CRD and `dast-operator` to `system` namespace.
+If you're using `Kind` cluster for testing, you will have to load images to it.
 ```shell
-kubectl apply -f config/crd/bases/security.banzaicloud.io_dasts.yaml 
-kubectl apply -f config/manager/manager.yaml
+kind load docker-image banzaicloud/dast-operator:latest
+kind load docker-image banzaicloud/dast-analyzer:latest
+```
+
+## Deploying the operator
+
+First of all we need to deploy the `cert-manager`
+```shell
+kubectl create namespace cert-manager
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
+```
+
+You can read more about installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
+
+Clone dast-operator
+```shell
+git clone https://github.com/banzaicloud/dast-operator.git
+cd dast-operator
+```
+
+Deploy dast-operator
+```shell
+make deploy
 ```
 
 ## Examples
@@ -60,8 +80,8 @@ kubectl apply -f config/manager/manager.yaml
 ### Deploy OWASP ZAP
 Deploy example CR
 ```shell
-kubectl create ns zapproxy
-kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zapproxy
+kubectl create ns zaproxy
+kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zaproxy
 ```
 
 Content of Dast custom resource:
@@ -71,15 +91,15 @@ kind: Dast
 metadata:
   name: dast-sample
 spec:
-  zapproxy:
+  zaproxy:
     name: dast-test
     apikey: abcd1234
 ```
 
-### Deploy application and initiate active scan 
+### Deploy application and initiate active scan
 ```shell
 kubectl create ns test
-kubectl apply -f config/samples/test_secvice.yaml -n test
+kubectl apply -f config/samples/test_service.yaml -n test
 ```
 
 Contetnt of `test_secvice.yaml`:
@@ -113,8 +133,8 @@ kind: Service
 metadata:
   name: test-service
   annotations:
-    dast.security.banzaicloud.io/zapproxy: "dast-test"
-    dast.security.banzaicloud.io/zapproxy-namespace: "zapproxy"
+    dast.security.banzaicloud.io/zaproxy: "dast-test"
+    dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
 spec:
   selector:
     app: nginx
@@ -124,11 +144,7 @@ spec:
     targetPort: 80
 ```
 
-### Deploy and test validating webhook
-Deploy ValidatingWebhookConfiguration and webhook service
-```shell
-kubectl apply -f config/samples/webhook_config.yaml
-```
+### Test the validating webhook
 
 Deploy ingress with previous defined `test-service` backend.
 ```shell
@@ -170,11 +186,32 @@ kind: Dast
 metadata:
   name: dast-sample-external
 spec:
-  zapproxy:
+  zaproxy:
     name: dast-test-external
     apikey: abcd1234
   analyzer:
     image: banzaicloud/dast-analyzer:latest
     name: external-test
     target: http://example.com
+```
+
+
+### Defin OpenAPI definition as annotation in a service
+```yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: test-api-service
+    annotations:
+      dast.security.banzaicloud.io/zaproxy: "dast-test"
+      dast.security.banzaicloud.io/zaproxy-namespace: "zaproxy"
+      dast.security.banzaicloud.io/apiscan: "true"
+      dast.security.banzaicloud.io/openapi-url: "https://raw.githubusercontent.com/sagikazarmark/modern-go-application/master/api/openapi/todo/openapi.yaml"
+  spec:
+    selector:
+      app: mga
+      secscan: dast
+    ports:
+    - port: 8000
+      targetPort: 8000
 ```

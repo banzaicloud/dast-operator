@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package zapproxy
+package zaproxy
 
 import (
 	"github.com/go-logr/logr"
@@ -27,7 +27,7 @@ import (
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
-// deployment return a deployment for zapproxy
+// deployment return a deployment for zaproxy
 func (r *Reconciler) deployment(log logr.Logger) runtime.Object {
 
 	return newDeployment(r.Dast)
@@ -40,16 +40,16 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 	}
 
 	var zapImage string
-	if dast.Spec.ZapProxy.Image == "" {
+	if dast.Spec.ZaProxy.Image == "" {
 		zapImage = "owasp/zap2docker-live"
 	} else {
-		zapImage = dast.Spec.ZapProxy.Image
+		zapImage = dast.Spec.ZaProxy.Image
 	}
 
 	replicas := int32(1)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dast.Spec.ZapProxy.Name,
+			Name:      dast.Spec.ZaProxy.Name,
 			Namespace: dast.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(dast, securityv1alpha1.GroupVersion.WithKind("Dast")),
@@ -70,20 +70,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 							Name:    "zap-proxy",
 							Image:   zapImage,
 							Command: []string{"zap.sh"},
-							Args: []string{
-								"-daemon",
-								"-host",
-								"0.0.0.0",
-								"-port",
-								"8080",
-								"-config",
-								// TODO use generated API key
-								"api.key=" + dast.Spec.ZapProxy.APIKey,
-								"-config",
-								"api.addrs.addr.name=.*",
-								"-config",
-								"api.addrs.addr.regex=true",
-							},
+							Args:    withArgs(dast.Spec.ZaProxy),
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
@@ -98,9 +85,8 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 										Port: intstr.IntOrString{IntVal: 8080},
 										HTTPHeaders: []corev1.HTTPHeader{
 											{
-												Name: "X-ZAP-API-Key",
-												// TODO use generated API key
-												Value: dast.Spec.ZapProxy.APIKey,
+												Name:  "X-ZAP-API-Key",
+												Value: dast.Spec.ZaProxy.APIKey,
 											},
 										},
 									},
@@ -114,4 +100,28 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 			},
 		},
 	}
+}
+
+func withArgs(zaProxy securityv1alpha1.ZaProxy) []string {
+	args := []string{
+		"-daemon",
+		"-host",
+		"0.0.0.0",
+		"-port",
+		"8080",
+		"-config",
+		"api.key=" + zaProxy.APIKey,
+		"-config",
+		"api.addrs.addr.name=.*",
+		"-config",
+		"api.addrs.addr.regex=true",
+	}
+
+	if zaProxy.Config != nil {
+		for _, config := range zaProxy.Config {
+			args = append(args, []string{"-config", config}...)
+		}
+	}
+
+	return args
 }

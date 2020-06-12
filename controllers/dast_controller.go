@@ -28,7 +28,7 @@ import (
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 	"github.com/banzaicloud/dast-operator/pkg/resources"
 	"github.com/banzaicloud/dast-operator/pkg/resources/analyzer"
-	"github.com/banzaicloud/dast-operator/pkg/resources/zapproxy"
+	"github.com/banzaicloud/dast-operator/pkg/resources/zaproxy"
 )
 
 // DastReconciler reconciles a Dast object
@@ -61,7 +61,7 @@ func (r *DastReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	reconcilers := []resources.ComponentReconciler{
-		zapproxy.New(r.Client, &dast),
+		zaproxy.New(r.Client, &dast),
 	}
 	if dast.Spec.Analyzer.Name != "" {
 		reconcilers = append(reconcilers, analyzer.New(r.Client, &dast))

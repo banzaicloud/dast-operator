@@ -3,18 +3,16 @@ module github.com/banzaicloud/dast-operator
 go 1.13
 
 require (
+	emperror.dev/emperror v0.32.0
 	github.com/go-logr/logr v0.1.0
 	github.com/goph/emperror v0.17.2
-	github.com/onsi/ginkgo v1.8.0
-	github.com/onsi/gomega v1.5.0
+	github.com/onsi/ginkgo v1.12.0
+	github.com/onsi/gomega v1.10.0
 	github.com/spf13/cast v1.3.0
-	github.com/spf13/cobra v0.0.5 // indirect
 	github.com/zaproxy/zap-api-go v0.0.0-20180130105416-8779ab35e992
-	golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
-	k8s.io/api v0.0.0-20190409021203-6e4e0e4f393b
-	k8s.io/apimachinery v0.0.0-20190404173353-6a84e37a896d
-	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	sigs.k8s.io/controller-runtime v0.2.0
+	istio.io/pkg v0.0.0-20200603210349-955e16c6198a
+	k8s.io/api v0.18.2
+	k8s.io/apimachinery v0.18.2
+	k8s.io/client-go v0.18.2
+	sigs.k8s.io/controller-runtime v0.6.0
 )
-
-replace github.com/banzaicloud/dast-operator/cmd/dynamic-analyzer => ./cmd/dynamic-analyzer

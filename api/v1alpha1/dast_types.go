@@ -28,15 +28,16 @@ import (
 type DastSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ZapProxy ZapProxy `json:"zapproxy"`
+	ZaProxy  ZaProxy  `json:"zaproxy"`
 	Analyzer Analyzer `json:"analyzer,omitempty"`
 }
 
-type ZapProxy struct {
-	Image     string `json:"image,omitempty"`
-	Name      string `json:"name"`
-	NameSpace string `json:"namespace,omitempty"`
-	APIKey    string `json:"apikey,omitempty"`
+type ZaProxy struct {
+	Image     string   `json:"image,omitempty"`
+	Name      string   `json:"name"`
+	NameSpace string   `json:"namespace,omitempty"`
+	APIKey    string   `json:"apikey,omitempty"`
+	Config    []string `json:"config,omitempty"`
 }
 
 type Analyzer struct {

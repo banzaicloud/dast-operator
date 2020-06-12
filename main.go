@@ -25,9 +25,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 	"github.com/banzaicloud/dast-operator/controllers"
@@ -41,34 +43,44 @@ var (
 )
 
 func init() {
-
-	appsv1.AddToScheme(scheme)
-	batchv1.AddToScheme(scheme)
-	corev1.AddToScheme(scheme)
-	securityv1alpha1.AddToScheme(scheme)
-	extv1beta1.AddToScheme(scheme)
-
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = securityv1alpha1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+	_ = batchv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+	_ = securityv1alpha1.AddToScheme(scheme)
+	_ = extv1beta1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
 	var metricsAddr string
+	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.Logger(true))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{Scheme: scheme, MetricsBindAddress: metricsAddr})
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:             scheme,
+		MetricsBindAddress: metricsAddr,
+		Port:               9443,
+		LeaderElection:     enableLeaderElection,
+		LeaderElectionID:   "a7efd836.banzaicloud.io",
+	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	err = (&controllers.DastReconciler{
+	if err = (&controllers.DastReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Dast"),
-	}).SetupWithManager(mgr)
-	if err != nil {
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Dast")
 		os.Exit(1)
 	}
@@ -80,14 +92,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
 	}
-	err = (&webhooks.IngressWH{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("webhooks").WithName("Ingress"),
-	}).SetupWithManager(mgr)
-	if err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Ingress")
-		os.Exit(1)
+
+	// Setup webhooks
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		setupLog.Info("setting up webhook server")
+		hookServer := mgr.GetWebhookServer()
+
+		setupLog.Info("registering webhooks to the webhook server")
+		hookServer.Register("/ingress", &webhook.Admission{Handler: webhooks.NewIngressValidator(mgr.GetClient(), ctrl.Log.WithName("webhooks").WithName("Ingress"))})
 	}
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

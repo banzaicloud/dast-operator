@@ -1,0 +1,18 @@
+apiVersion: security.banzaicloud.io/v1alpha1
+kind: Dast
+metadata:
+  name: dast-sample
+spec:
+  zaproxy:
+    name: dast-test
+    apikey: abcd1234
+    config:
+      - "replacer.full_list(0).description=auth"
+      - "replacer.full_list(0).enabled=true"
+      - "replacer.full_list(0).matchtype=REQ_HEADER"
+      - "replacer.full_list(0).matchstr=Authorization"
+      - "replacer.full_list(0).regex=false"
+      - "replacer.full_list(0).replacement=Bearer AbCdEf123456"
+      - "formhandler.fields.field(0).fieldId=id"
+      - "formhandler.fields.field(0).value=example-todo-id"
+      - "formhandler.fields.field(0).enabled=true"
