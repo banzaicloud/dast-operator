@@ -9,18 +9,18 @@ This operator leverages OWASP ZAP to make automated basic web service security t
 - Scan external URL defined in custom resource
 - Scan internal services based on its annotations
 - API Security testing based on OpenAPI definition
-- Before deploying ingress, check backend services whether scanned and scan results are below defined tresholds
+- Before deploying ingress, check backend services whether scanned and scan results are below defined thresholds
 
 ### On the DAST operator roadmap:
 - In webhook, check the scanner job is running, completed or not exist
 - Improve service status check
 - Handle multiple service ports
 - Handle different service protocols
-- Use HTTPS insted of HTTP connecting to ZAP
+- Use HTTPS instead of HTTP connecting to ZAP
 - Generate randomly ZAP API key if not defied
 - API testing with JMeter and ZAP
 - Parameterized security payload with fuzz
-- Automaged SQLi testing usign SQLmap
+- Automated SQLi testing using SQLmap
 
 ## Structure of the DAST operator:
 DAST operator running two reconcilers and one [validating admission webhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook)
@@ -35,7 +35,7 @@ DAST operator running two reconcilers and one [validating admission webhook](htt
 - Validating webhook for ingress
 
 ## Current limitations:
-Using webhook feature, deploying ingress only successfull when backend service is already scanned. If you deploy something with helm which contains service and ingress definitions as well, the ingress deployment will fail due to scan progress of the backend service won't be finished.
+Using webhook feature, deploying ingress only successful when backend service is already scanned. If you deploy something with helm which contains service and ingress definitions as well, the ingress deployment will fail due to scan progress of the backend service won't be finished.
 
 ## Build images
 ```shell
@@ -196,7 +196,7 @@ spec:
 ```
 
 
-### Defin OpenAPI definition as annotation in a service
+### Define OpenAPI definition as annotation in a service
 ```yaml
   apiVersion: v1
   kind: Service
