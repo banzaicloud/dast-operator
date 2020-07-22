@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.10.0
 	github.com/spf13/cast v1.3.0
-	github.com/zaproxy/zap-api-go v0.0.0-20180130105416-8779ab35e992
+	github.com/zaproxy/zap-api-go v0.0.0-20200721180916-5fc7048efb18
 	istio.io/pkg v0.0.0-20200603210349-955e16c6198a
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
