@@ -358,8 +358,8 @@ github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijb
 github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv3vaXspKw=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
-github.com/zaproxy/zap-api-go v0.0.0-20180130105416-8779ab35e992 h1:1bcuck5Gp81nV9YQ2/V8KzmQLOEpng0JlnHSqUsV7/Q=
-github.com/zaproxy/zap-api-go v0.0.0-20180130105416-8779ab35e992/go.mod h1:lBqVZ0hGhjkg0sL/0O7IG1QE+kv3sRQMtpKuyZi5llY=
+github.com/zaproxy/zap-api-go v0.0.0-20200721180916-5fc7048efb18 h1:BUfxacXzJ2oDk1KgVNslJXIgBYQGkoCRGbQpZW3A9hk=
+github.com/zaproxy/zap-api-go v0.0.0-20200721180916-5fc7048efb18/go.mod h1:lBqVZ0hGhjkg0sL/0O7IG1QE+kv3sRQMtpKuyZi5llY=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738/go.mod h1:dnLIgRNXwCJa5e+c6mIZCrds/GIG4ncV9HhK5PX7jPg=
