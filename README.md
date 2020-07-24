@@ -1,8 +1,8 @@
 # DAST operator
 
-> Dynamic application security testing (DAST) is a process of testing an application or software product in an operating state.
+> Dynamic application security testing (DAST) is a process of testing an application or software in an operating state.
 
-This operator leverages OWASP ZAP to make automated basic web service security testing currently.
+This operator leverages [OWASP ZAP](https://www.zaproxy.org) to make automated security testing for web applications and APIs based on OpenAPI definitions.
 
 ### The operator current features:
 - Deploy OWASP ZAP proxy defined in custom resource
@@ -35,7 +35,7 @@ DAST operator running two reconcilers and one [validating admission webhook](htt
 - Validating webhook for ingress
 
 ## Current limitations:
-Using webhook feature, deploying ingress only successful when backend service is already scanned. If you deploy something with helm which contains service and ingress definitions as well, the ingress deployment will fail due to scan progress of the backend service won't be finished.
+Using the webhook feature, deploying an ingress is only successful when the backend service has been already scanned. If we deploy something with Helm that contains a service and an ingress definition as well, the ingress deployment will fail as to the scan progress of the backend service is not finished yet.
 
 ## Build images
 ```shell
@@ -53,7 +53,7 @@ kind load docker-image banzaicloud/dast-analyzer:latest
 
 ## Deploying the operator
 
-First of all we need to deploy the `cert-manager`
+First of all we need to deploy `cert-manager`
 ```shell
 kubectl create namespace cert-manager
 helm repo add jetstack https://charts.jetstack.io
@@ -102,7 +102,7 @@ kubectl create ns test
 kubectl apply -f config/samples/test_service.yaml -n test
 ```
 
-Contetnt of `test_secvice.yaml`:
+Content of `test_secvice.yaml`:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -215,3 +215,5 @@ spec:
     - port: 8000
       targetPort: 8000
 ```
+
+
