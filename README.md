@@ -17,7 +17,7 @@ This operator leverages [OWASP ZAP](https://www.zaproxy.org) to make automated s
 - Handle multiple service ports
 - Handle different service protocols
 - Use HTTPS instead of HTTP connecting to ZAP
-- Generate randomly ZAP API key if not defied
+- Generate randomly ZAP API key if not defined
 - API testing with JMeter and ZAP
 - Parameterized security payload with fuzz
 - Automated SQLi testing using SQLmap
@@ -62,7 +62,7 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
 ```
 
-You can read more about installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
+You can read more about the installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
 
 Clone dast-operator
 ```shell
@@ -96,7 +96,7 @@ spec:
     apikey: abcd1234
 ```
 
-### Deploy application and initiate active scan
+### Deploy the application and initiate active scan
 ```shell
 kubectl create ns test
 kubectl apply -f config/samples/test_service.yaml -n test
@@ -146,7 +146,7 @@ spec:
 
 ### Test the validating webhook
 
-Deploy ingress with previous defined `test-service` backend.
+Deploy ingress with previously defined `test-service` backend.
 ```shell
 kubectl apply -f config/samples/test_ingress.yaml -n test
 ```
@@ -215,5 +215,3 @@ spec:
     - port: 8000
       targetPort: 8000
 ```
-
-
