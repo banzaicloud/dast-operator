@@ -71,6 +71,7 @@ jobs:
 
     - name: Deploying dast-operator
       run: |
+        kubectl create ns dast-operator-system
         make deploy
 
     - name: Deploy dast resource
