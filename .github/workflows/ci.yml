@@ -47,7 +47,7 @@ jobs:
       run: |
         make docker-build
 
-    - name: Build dast-operator Docker image
+    - name: Build dast-analyzer Docker image
       run: |
         make docker-analyzer
 
@@ -68,3 +68,17 @@ jobs:
         helm repo update
         kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
         helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
+
+    - name: Deploying dast-operator
+      run: |
+        make deploy
+
+    - name: Deploy dast resource
+      run: |
+        kubectl create ns zaproxy
+        kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zaproxy
+
+    - name: Deploy test applications
+      run: |
+        kubectl create ns test
+        kubectl apply -f config/samples/test_service.yaml -n test
