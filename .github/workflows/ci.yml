@@ -1,9 +1,11 @@
 name: CI
 on:
   pull_request:
-    branches: [master, create-test]
+    branches: [master,]
     paths-ignore:
       - 'README.md'
+  push:
+    branches: [create-test,]
 
 jobs:
 
@@ -21,13 +23,8 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v1
 
-    - name: Check licenses
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: make license-check
-
     - name: Buld code
-      run: make build
+      run: make
 
   acceptance-test:
     name: Acceptance test
