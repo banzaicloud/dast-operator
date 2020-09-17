@@ -1,6 +1,6 @@
 module github.com/banzaicloud/dast-operator
 
-go 1.13
+go 1.14
 
 require (
 	emperror.dev/emperror v0.32.0
