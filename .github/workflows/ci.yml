@@ -68,7 +68,10 @@ jobs:
         helm repo update
         kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
         helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
-        sleep 100
+
+    - name: Check webhook
+      run: |
+        timeout 100s hack/check-state.sh
 
     - name: Deploying dast-operator
       run: |
