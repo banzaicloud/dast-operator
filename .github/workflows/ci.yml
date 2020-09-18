@@ -4,8 +4,6 @@ on:
     branches: [master,]
     paths-ignore:
       - 'README.md'
-  push:
-    branches: [create-test,]
 
 jobs:
 
@@ -69,7 +67,7 @@ jobs:
         kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
         helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
 
-    - name: Check webhook
+    - name: Check cert-manager webhook
       run: |
         timeout 100s hack/check-state.sh
 

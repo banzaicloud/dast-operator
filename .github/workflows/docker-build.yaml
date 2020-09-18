@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - create-test
 
 jobs:
   docker:
@@ -19,6 +21,17 @@ jobs:
           registry: ghcr.io
           repository: banzaicloud/dast-operator
           dockerfile: Dockerfile
+          tag_with_ref: true
+          add_git_labels: true
+          tags: latest
+      - name: Build dast-analyzer
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          registry: ghcr.io
+          repository: banzaicloud/dast-analyzer
+          dockerfile: Dockerfile-analyzer
           tag_with_ref: true
           add_git_labels: true
           tags: latest
