@@ -5,6 +5,7 @@ IMG ?= ${ORGANIZATION}/dast-operator:latest
 ANALYZER_IMG ?= ${ORGANIZATION}/dast-analyzer:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+LICENSEI_VERSION = 0.3.1
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -16,7 +17,7 @@ endif
 all: manager
 
 # Run tests
-test: generate fmt vet manifests
+test: generate fmt vet manifests license-check
 	go test ./... -coverprofile cover.out
 
 # Build manager binary
@@ -86,3 +87,18 @@ CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
+
+
+bin/licensei: bin/licensei-${LICENSEI_VERSION}
+	@ln -sf licensei-${LICENSEI_VERSION} bin/licensei
+bin/licensei-${LICENSEI_VERSION}:
+	@mkdir -p bin
+	curl -sfL https://git.io/licensei | bash -s v${LICENSEI_VERSION}
+	@mv bin/licensei $@
+
+.PHONY: license-check
+license-check: bin/licensei
+	bin/licensei check
+	bin/licensei header
+
+
