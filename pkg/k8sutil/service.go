@@ -86,7 +86,7 @@ func GetServiceAnotations(service *corev1.Service, log logr.Logger) (map[string]
 		}
 		zaProxyCfg["analyzer_image"], ok = annotations["dast.security.banzaicloud.io/analyzer_image"]
 		if !ok {
-			zaProxyCfg["analyzer_image"] = "banzaicloud/dast-analyzer:latest"
+			zaProxyCfg["analyzer_image"] = "ghcr.io/banzaicloud/dast-analyzer:latest"
 			log.Info("missing zaproxy analyzer image annotation, using ", "analyzer_image", zaProxyCfg["analyzer_image"])
 		}
 		return zaProxyCfg, nil
