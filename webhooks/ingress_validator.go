@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/ingress,mutating=false,failurePolicy=fail,groups="extensions",resources=ingresses,verbs=create,versions=v1beta1,name=dast.security.banzaicloud.io
+// +kubebuilder:webhook:path=/ingress,mutating=false,failurePolicy=fail,groups="extensions";"networking.k8s.io",resources=ingresses,verbs=create,versions=v1beta1;v1,name=dast.security.banzaicloud.io
 
 // NewIngressValidator creates new ingressValidator
 func NewIngressValidator(client client.Client, log logr.Logger) IngressValidator {
