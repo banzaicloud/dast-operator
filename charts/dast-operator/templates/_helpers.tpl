@@ -60,3 +60,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the name of the tls secret to use
+*/}}
+{{- define "dast-operator.tlsSecretName" -}}
+{{- if .Values.service.tlsSecretName }}
+{{- .Values.secrvice.tlsSecretName }}
+{{- else }}
+{{- printf "%s-webhook-server-cert" (include "dast-operator.fullname" .) }}
+{{- end }}
+{{- end }}

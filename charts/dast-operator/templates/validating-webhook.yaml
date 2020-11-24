@@ -1,0 +1,31 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "dast-operator.fullname" . }}-validating-webhook-configuration
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "dast-operator.fullname" . }}-certificate
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: {{ include "dast-operator.fullname" . }}-webhook-service
+      namespace: {{.Release.Namespace }}
+      path: /ingress
+  failurePolicy: Fail
+  name: dast.security.banzaicloud.io
+  rules:
+  - apiGroups:
+    - extensions
+    - networking.k8s.io
+    apiVersions:
+    - v1beta1
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - ingresses
+  admissionReviewVersions:
+    - v1beta1
+    - v1
+  sideEffects: None
+  timeoutSeconds: 5

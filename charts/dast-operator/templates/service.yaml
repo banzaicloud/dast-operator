@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "dast-operator.fullname" . }}
+  name: {{ include "dast-operator.fullname" . }}-webhook-service
   labels:
     {{- include "dast-operator.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: 9443
       protocol: TCP
       name: http
   selector:

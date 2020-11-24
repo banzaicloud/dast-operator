@@ -5,9 +5,7 @@ metadata:
   labels:
     {{- include "dast-operator.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "dast-operator.selectorLabels" . | nindent 6 }}
@@ -27,24 +25,35 @@ spec:
       serviceAccountName: {{ include "dast-operator.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "dast-operator.tlsSecretName" . }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - mountPath: /tmp/k8s-webhook-server/serving-certs
+            name: cert
+            readOnly: true
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 9443
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /ingress
               port: http
+              scheme: HTTPS
           readinessProbe:
             httpGet:
-              path: /
+              path: /ingress
               port: http
+              scheme: HTTPS
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
