@@ -58,8 +58,8 @@ First of all we need to deploy `cert-manager`
 kubectl create namespace cert-manager
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v0.15.1
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
 ```
 
 You can read more about the installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
