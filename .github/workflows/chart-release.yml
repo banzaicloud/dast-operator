@@ -1,0 +1,18 @@
+name: Create and upload chart
+on:
+  push:
+    tags:
+      - "charts/[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: unwrittenmedia/helm3-push-action@v1.0.2
+      env:
+        SOURCE_DIR: 'charts'
+        CHART_FOLDER: 'dast-operator'
+        CHARTMUSEUM_URL: 'https://kubernetes-charts.banzaicloud.com'
+        CHARTMUSEUM_USER: '${{ secrets.HELM_REPO_USERNAME }}'
+        CHARTMUSEUM_PASSWORD: '${{ secrets.HELM_REPO_PASSWORD }}'
