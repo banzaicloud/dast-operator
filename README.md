@@ -37,7 +37,29 @@ DAST operator running two reconcilers and one [validating admission webhook](htt
 ## Current limitations:
 Using the webhook feature, deploying an ingress is only successful when the backend service has been already scanned. If we deploy something with Helm that contains a service and an ingress definition as well, the ingress deployment will fail as to the scan progress of the backend service is not finished yet.
 
-## Build images
+## Deploy the cert-manager
+
+First of all we need to deploy `cert-manager`
+```shell
+kubectl create namespace cert-manager
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
+```
+
+You can read more about the installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
+
+## Deploy the dast-operator via helm
+
+Or you can install via helm:
+```shell
+helm repo add banzaicloud https://kubernetes-charts.banzaicloud.com/
+helm install dast-operator banzaicloud/dast-operator
+```
+
+## Build images and deploy the operator manually
+
 ```shell
 git clone https://github.com/banzaicloud/dast-operator.git
 cd dast-operator
@@ -50,19 +72,6 @@ If you're using `Kind` cluster for testing, you will have to load images to it.
 kind load docker-image banzaicloud/dast-operator:latest
 kind load docker-image banzaicloud/dast-analyzer:latest
 ```
-
-## Deploying the operator
-
-First of all we need to deploy `cert-manager`
-```shell
-kubectl create namespace cert-manager
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
-```
-
-You can read more about the installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
 
 Clone dast-operator
 ```shell
@@ -81,7 +90,7 @@ make deploy
 Deploy example CR
 ```shell
 kubectl create ns zaproxy
-kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zaproxy
+kubectl apply -f https://raw.githubusercontent.com/banzaicloud/dast-operator/master/config/samples/security_v1alpha1_dast.yaml -n zaproxy
 ```
 
 Content of Dast custom resource:
@@ -99,7 +108,7 @@ spec:
 ### Deploy the application and initiate active scan
 ```shell
 kubectl create ns test
-kubectl apply -f config/samples/test_service.yaml -n test
+kubectl apply -f https://raw.githubusercontent.com/banzaicloud/dast-operator/master/config/samples/test_service.yaml -n test
 ```
 
 Content of `test_secvice.yaml`:
@@ -148,7 +157,7 @@ spec:
 
 Deploy ingress with previously defined `test-service` backend.
 ```shell
-kubectl apply -f config/samples/test_ingress.yaml -n test
+kubectl apply -f https://raw.githubusercontent.com/banzaicloud/dast-operator/master/config/samples/test_ingress.yaml -n test
 ```
 
 Example ingress definition:
@@ -176,7 +185,7 @@ spec:
 ### Scan external URL
 ```shell
 kubectl create ns external
-kubectl apply -f config/samples/security_v1alpha1_dast_external.yaml -n external
+kubectl apply -f https://raw.githubusercontent.com/banzaicloud/dast-operator/master/config/samples/security_v1alpha1_dast_external.yaml -n external
 ```
 
 Content of DAST CR
