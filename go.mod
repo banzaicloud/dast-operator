@@ -3,10 +3,9 @@ module github.com/banzaicloud/dast-operator
 go 1.14
 
 require (
-	emperror.dev/emperror v0.32.0
+	emperror.dev/emperror v0.33.0
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
-	github.com/goph/emperror v0.17.2
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
 	github.com/spf13/cast v1.3.0

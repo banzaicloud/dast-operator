@@ -17,8 +17,8 @@ limitations under the License.
 package zaproxy
 
 import (
+	"emperror.dev/emperror"
 	"github.com/go-logr/logr"
-	"github.com/goph/emperror"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
