@@ -27,7 +27,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spf13/cast"
 	"github.com/zaproxy/zap-api-go/zap"
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -55,7 +55,7 @@ type ingressValidator struct {
 
 // ingressValidator validates ingress.
 func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
-	ingress := &extv1beta1.Ingress{}
+	ingress := &unstructured.Unstructured{}
 
 	err := a.decoder.Decode(req, ingress)
 	if err != nil {
@@ -64,7 +64,10 @@ func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) ad
 
 	tresholds := getIngressTresholds(ingress)
 
-	backendServices := k8sutil.GetIngressBackendServices(ingress, a.Log)
+	backendServices, err := k8sutil.GetIngressBackendServices(ingress, a.Log)
+	if err != nil {
+		return admission.Errored(http.StatusNotImplemented, err)
+	}
 	a.Log.Info("Services", "backend_services", backendServices)
 	ok, err := checkServices(backendServices, ingress.GetNamespace(), a.Log, a.Client, tresholds)
 	if err != nil {
@@ -124,7 +127,7 @@ func checkServices(services []map[string]string, namespace string, log logr.Logg
 	return true, nil
 }
 
-func getIngressTresholds(ingress *extv1beta1.Ingress) map[string]int {
+func getIngressTresholds(ingress *unstructured.Unstructured) map[string]int {
 	annotations := ingress.GetAnnotations()
 	treshold := map[string]int{
 		"High":          0,

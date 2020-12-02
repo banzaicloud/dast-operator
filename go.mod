@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	emperror.dev/emperror v0.33.0
+	emperror.dev/errors v0.8.0
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
 	github.com/onsi/ginkgo v1.12.1
