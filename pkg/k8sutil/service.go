@@ -18,13 +18,14 @@ package k8sutil
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strconv"
 
 	"emperror.dev/emperror"
+	"emperror.dev/errors"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -47,18 +48,35 @@ func GetTargetService(service *corev1.Service) string {
 	return "http://" + service.GetName() + "." + service.GetNamespace() + ".svc.cluster.local:" + portNR
 }
 
-func GetIngressBackendServices(ingress *extv1beta1.Ingress, log logr.Logger) []map[string]string {
+func GetIngressBackendServices(ingress *unstructured.Unstructured, log logr.Logger) ([]map[string]string, error) {
 	log.Info("ingress", "ingress", ingress)
 	backends := []map[string]string{}
-	for _, rule := range ingress.Spec.Rules {
-		for _, path := range rule.HTTP.Paths {
+	rules, ok, _ := unstructured.NestedSlice(ingress.Object, "spec", "rules")
+	if !ok {
+		return backends, errors.New("value not found: rules")
+	}
+	for _, rule := range rules {
+		paths, ok, _ := unstructured.NestedSlice(rule.(map[string]interface{}), "http", "paths")
+		if !ok {
+			return backends, errors.New("value not found: paths")
+		}
+		for _, path := range paths {
 			backend := map[string]string{}
-			backend["name"] = path.Backend.ServiceName
-			backend["port"] = path.Backend.ServicePort.String()
+			backend["name"], ok, _ = unstructured.NestedString(path.(map[string]interface{}), "backend", "serviceName")
+			if !ok {
+				return backends, errors.New("value not found: serviceName")
+			}
+			portNum, ok, _ := unstructured.NestedFieldCopy(path.(map[string]interface{}), "backend", "servicePort")
+			if !ok {
+				return backends, errors.New("value not found: servicePort")
+			}
+
+			backend["port"] = fmt.Sprintf("%v", portNum)
 			backends = append(backends, backend)
 		}
 	}
-	return backends
+
+	return backends, nil
 }
 
 func GetServiceByName(name, namespace string, client client.Client) (*corev1.Service, error) {
