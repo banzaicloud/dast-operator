@@ -64,11 +64,17 @@ func GetIngressBackendServices(ingress *unstructured.Unstructured, log logr.Logg
 			backend := map[string]string{}
 			backend["name"], ok, _ = unstructured.NestedString(path.(map[string]interface{}), "backend", "serviceName")
 			if !ok {
-				return backends, errors.New("value not found: serviceName")
+				backend["name"], ok, _ = unstructured.NestedString(path.(map[string]interface{}), "backend", "service", "name")
+				if !ok {
+					return backends, errors.New("value not found: service name")
+				}
 			}
 			portNum, ok, _ := unstructured.NestedFieldCopy(path.(map[string]interface{}), "backend", "servicePort")
 			if !ok {
-				return backends, errors.New("value not found: servicePort")
+				portNum, ok, _ = unstructured.NestedFieldCopy(path.(map[string]interface{}), "backend", "service", "port", "number")
+				if !ok {
+					return backends, errors.New("value not found: service port")
+				}
 			}
 
 			backend["port"] = fmt.Sprintf("%v", portNum)
