@@ -5,6 +5,9 @@ on:
     paths-ignore:
       - 'README.md'
       - 'charts/**'
+      - '.github/workflows/chart-lint.yml'
+      - '.github/workflows/chart-release.yml'
+      - '.github/workflows/docker.yml'
 
 jobs:
 
