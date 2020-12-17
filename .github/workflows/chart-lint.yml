@@ -7,6 +7,8 @@ on:
       - 'charts/**'
       - '.github/workflows/chart-lint.yml'
 
+
+
 jobs:
 
   lint-test:
@@ -38,12 +40,15 @@ jobs:
           helm repo update
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
           helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
+        if: steps.lint.outputs.changed == 'true'
 
       - name: Check cert-manager webhook
         run: |
           timeout 100s hack/check-state.sh
+        if: steps.lint.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
         uses: helm/chart-testing-action@v1.0.0
         with:
           command: install
+        if: steps.lint.outputs.changed == 'true'
