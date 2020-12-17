@@ -5,6 +5,7 @@ on:
       - master
     paths:
       - 'charts/**'
+      - '.github/workflows/chart-lint.yml'
 
 jobs:
 
