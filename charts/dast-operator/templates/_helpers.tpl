@@ -68,6 +68,6 @@ Create the name of the tls secret to use
 {{- if .Values.service.tlsSecretName }}
 {{- .Values.secrvice.tlsSecretName }}
 {{- else }}
-{{- printf "%s-webhook-server-cert" (include "dast-operator.fullname" .) }}
+{{- printf "%s-webhook-server-cert" (include "dast-operator.name" .) }}
 {{- end }}
 {{- end }}
