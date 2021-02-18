@@ -1,4 +1,4 @@
-FROM golang:1.14 as builder
+FROM golang:1.16.0-alpine AS builder
 
 WORKDIR /workspace
 # Copy the go source
@@ -9,14 +9,14 @@ COPY webhooks/ webhooks/
 COPY pkg/ pkg/
 # Copy the Go Modules manifests
 COPY go.mod go.mod
-Copy go.sum go.sum
+COPY go.sum go.sum
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:3.13.2
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER nonroot:nonroot
