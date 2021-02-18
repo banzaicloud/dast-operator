@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sleep 5
+
 state="start"
 while true; do
   case "$state" in
@@ -9,7 +11,7 @@ while true; do
     ;;
   "pending")
     echo "pending state"
-    kubectl get po -l app.kubernetes.io/component=webhook -n cert-manager -o jsonpath='{.items[*].status.conditions[*].status}' | grep False
+    kubectl get po -l app.kubernetes.io/component=webhook -n cert-manager -o jsonpath='{.items[*].status.conditions[*].status}' | grep -i false
     status=$?
     if [ $status != 1 ]; then
       sleep 5
