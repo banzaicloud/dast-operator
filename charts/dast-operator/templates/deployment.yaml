@@ -46,11 +46,17 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
+              httpHeaders:
+                - name: Content-Type
+                  value: application/json
               path: /ingress
               port: http
               scheme: HTTPS
           readinessProbe:
             httpGet:
+              httpHeaders:
+                - name: Content-Type
+                  value: application/json
               path: /ingress
               port: http
               scheme: HTTPS
