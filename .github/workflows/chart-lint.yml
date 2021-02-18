@@ -28,9 +28,27 @@ jobs:
         with:
           command: lint
 
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        if: steps.lint.outputs.changed == 'true'
+
+      - name: Build dast-operator Docker image
+        run: |
+          make docker-build
+        if: steps.lint.outputs.changed == 'true'
+
       - name: Create kind cluster
         uses: helm/kind-action@v1.0.0
+        with:
+          cluster_name: "chart-testing"
         # Only build a kind cluster if there are chart changes to test.
+        if: steps.lint.outputs.changed == 'true'
+
+      - name: Load Docker images to kind
+        run: |
+          kind load docker-image --name chart-testing banzaicloud/dast-operator:latest
         if: steps.lint.outputs.changed == 'true'
 
       - name: Deploying cert-manager
