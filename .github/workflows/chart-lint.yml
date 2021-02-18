@@ -22,16 +22,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: git fetch --prune --unshallow
 
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.0.1
-
       - name: Run chart-testing (lint)
         id: lint
-        run: |
-          changed=$(ct lint)
-          if [[ -n "$changed" ]]; then
-            echo "::set-output name=changed::true"
-          fi
+        uses: helm/chart-testing-action@v1.0.0
+        with:
+          command: lint
 
       - name: Set up Go 1.16
         uses: actions/setup-go@v1
@@ -45,7 +40,7 @@ jobs:
         if: steps.lint.outputs.changed == 'true'
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0
+        uses: helm/kind-action@v1.1.0
         with:
           cluster_name: "chart-testing"
         # Only build a kind cluster if there are chart changes to test.
@@ -58,18 +53,17 @@ jobs:
 
       - name: Deploying cert-manager
         run: |
+          kubectl get pod -A
           kubectl create namespace cert-manager
           helm repo add jetstack https://charts.jetstack.io
           helm repo update
           kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
           helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
-        if: steps.lint.outputs.changed == 'true'
-
-      - name: Check cert-manager webhook
-        run: |
           timeout 100s hack/check-state.sh
         if: steps.lint.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --namespace default
+        uses: helm/chart-testing-action@v1.0.0
+        with:
+          command: install
         if: steps.lint.outputs.changed == 'true'
