@@ -1,4 +1,4 @@
-FROM golang:1.16.0-alpine AS builder
+FROM golang:1.16.1-alpine AS builder
 
 WORKDIR /workspace
 # Copy the go source
