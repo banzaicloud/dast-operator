@@ -7,7 +7,7 @@ COPY cmd/dynamic-analyzer .
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o dynamic-analyzer ./...
 
-FROM alpine:3.14.0
+FROM alpine:3.14.2
 WORKDIR /
 COPY --from=builder /workspace/dynamic-analyzer .
 ENTRYPOINT ["/dynamic-analyzer"]
