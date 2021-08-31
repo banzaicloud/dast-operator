@@ -1,32 +1,30 @@
 name: CI
 on:
   pull_request:
-    branches: [master,]
+    branches: [master]
     paths-ignore:
-      - 'README.md'
-      - 'charts/**'
-      - '.github/workflows/chart-lint.yml'
-      - '.github/workflows/chart-release.yml'
-      - '.github/workflows/docker.yml'
+      - "README.md"
+      - "charts/**"
+      - ".github/workflows/chart-lint.yml"
+      - ".github/workflows/chart-release.yml"
+      - ".github/workflows/docker.yml"
 
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
 
-    - name: Set up Go 1.16
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.16
+      - name: Check out code
+        uses: actions/checkout@v1
 
-    - name: Check out code
-      uses: actions/checkout@v1
-
-    - name: Buld code
-      run: make
+      - name: Buld code
+        run: make
 
   acceptance-test:
     name: Acceptance test
@@ -36,56 +34,55 @@ jobs:
       VERSION: latest
 
     steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
 
-    - name: Set up Go 1.16
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.16
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Build dast-operator Docker image
+        run: |
+          make docker-build
 
-    - name: Build dast-operator Docker image
-      run: |
-        make docker-build
+      - name: Build dast-analyzer Docker image
+        run: |
+          make docker-analyzer
 
-    - name: Build dast-analyzer Docker image
-      run: |
-        make docker-analyzer
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.2.0
+        with:
+          cluster_name: "acceptance-test"
 
-    - name: Create k8s Kind Cluster
-      uses: helm/kind-action@v1.1.0
-      with:
-        cluster_name: "acceptance-test"
+      - name: Load Docker images to kind
+        run: |
+          kind load docker-image --name acceptance-test banzaicloud/dast-operator:latest
+          kind load docker-image --name acceptance-test banzaicloud/dast-analyzer:latest
 
-    - name: Load Docker images to kind
-      run: |
-        kind load docker-image --name acceptance-test banzaicloud/dast-operator:latest
-        kind load docker-image --name acceptance-test banzaicloud/dast-analyzer:latest
+      - name: Deploying cert-manager
+        run: |
+          kubectl create namespace cert-manager
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.0/cert-manager.crds.yaml
+          helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.1.0
 
-    - name: Deploying cert-manager
-      run: |
-        kubectl create namespace cert-manager
-        helm repo add jetstack https://charts.jetstack.io
-        helm repo update
-        kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
-        helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
+      - name: Check cert-manager webhook
+        run: |
+          timeout 100s hack/check-state.sh
 
-    - name: Check cert-manager webhook
-      run: |
-        timeout 100s hack/check-state.sh
+      - name: Deploying dast-operator
+        run: |
+          kubectl create ns dast-operator-system
+          make deploy
 
-    - name: Deploying dast-operator
-      run: |
-        kubectl create ns dast-operator-system
-        make deploy
+      - name: Deploy dast resource
+        run: |
+          kubectl create ns zaproxy
+          kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zaproxy
 
-    - name: Deploy dast resource
-      run: |
-        kubectl create ns zaproxy
-        kubectl apply -f config/samples/security_v1alpha1_dast.yaml -n zaproxy
-
-    - name: Deploy test applications
-      run: |
-        kubectl create ns test
-        kubectl apply -f config/samples/test_service.yaml -n test
+      - name: Deploy test applications
+        run: |
+          kubectl create ns test
+          kubectl apply -f config/samples/test_service.yaml -n test
