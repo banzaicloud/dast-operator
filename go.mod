@@ -7,6 +7,7 @@ require (
 	emperror.dev/errors v0.8.0
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.3.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
 	github.com/spf13/cast v1.3.0
