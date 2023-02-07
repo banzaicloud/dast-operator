@@ -13,8 +13,8 @@ require (
 	github.com/spf13/cast v1.3.0
 	github.com/zaproxy/zap-api-go v0.0.0-20200721180916-5fc7048efb18
 	istio.io/pkg v0.0.0-20200603210349-955e16c6198a
-	k8s.io/api v0.19.4
-	k8s.io/apimachinery v0.19.4
-	k8s.io/client-go v0.19.4
+	k8s.io/api v0.20.0
+	k8s.io/apimachinery v0.20.0
+	k8s.io/client-go v0.20.0
 	sigs.k8s.io/controller-runtime v0.6.4
 )
