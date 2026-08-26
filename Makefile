@@ -3,9 +3,10 @@
 ORGANIZATION = banzaicloud
 IMG ?= ${ORGANIZATION}/dast-operator:latest
 ANALYZER_IMG ?= ${ORGANIZATION}/dast-analyzer:latest
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true"
-LICENSEI_VERSION = 0.3.1
+CRD_OPTIONS ?= "crd"
+LICENSEI_VERSION = 0.9.0
+CONTROLLER_TOOLS_VERSION ?= v0.21.0
+ENVTEST_K8S_VERSION ?= 1.34.1
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -17,8 +18,8 @@ endif
 all: manager
 
 # Run tests
-test: generate fmt vet manifests license-check
-	go test ./... -coverprofile cover.out
+test: generate fmt vet manifests license-check envtest
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
@@ -73,20 +74,16 @@ docker-push:
 
 # find or download controller-gen
 # download controller-gen if necessary
+CONTROLLER_GEN = $(GOBIN)/controller-gen
+.PHONY: controller-gen
 controller-gen:
-ifeq (, $(shell which controller-gen))
-	@{ \
-	set -e ;\
-	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$CONTROLLER_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.5 ;\
-	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
-	}
-CONTROLLER_GEN=$(GOBIN)/controller-gen
-else
-CONTROLLER_GEN=$(shell which controller-gen)
-endif
+	GOBIN=$(GOBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+# find or download setup-envtest
+ENVTEST = $(GOBIN)/setup-envtest
+.PHONY: envtest
+envtest:
+	GOBIN=$(GOBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 
 bin/licensei: bin/licensei-${LICENSEI_VERSION}
@@ -100,5 +97,9 @@ bin/licensei-${LICENSEI_VERSION}:
 license-check: bin/licensei
 	bin/licensei check
 	bin/licensei header
+
+.PHONY: license-cache
+license-cache: bin/licensei
+	bin/licensei cache
 
 

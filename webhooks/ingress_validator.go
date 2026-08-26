@@ -32,13 +32,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// +kubebuilder:webhook:path=/ingress,mutating=false,failurePolicy=fail,groups="extensions";"networking.k8s.io",resources=ingresses,verbs=create,versions=v1beta1;v1,name=dast.security.banzaicloud.io
+// +kubebuilder:webhook:path=/ingress,mutating=false,failurePolicy=fail,sideEffects=None,admissionReviewVersions=v1,groups="networking.k8s.io",resources=ingresses,verbs=create,versions=v1,name=dast.security.banzaicloud.io
 
 // NewIngressValidator creates new ingressValidator
 func NewIngressValidator(client client.Client, log logr.Logger) IngressValidator {
 	return &ingressValidator{
-		Client: client,
-		Log:    log,
+		Client:  client,
+		decoder: admission.NewDecoder(client.Scheme()),
+		Log:     log,
 	}
 }
 
@@ -49,7 +50,7 @@ type IngressValidator interface {
 
 type ingressValidator struct {
 	Client  client.Client
-	decoder *admission.Decoder
+	decoder admission.Decoder
 	Log     logr.Logger
 }
 
@@ -79,12 +80,6 @@ func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) ad
 
 	return admission.Allowed("scan results are below treshold")
 
-}
-
-// InjectDecoder injects the decoder.
-func (a *ingressValidator) InjectDecoder(d *admission.Decoder) error {
-	a.decoder = d
-	return nil
 }
 
 func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client, tresholds map[string]int) (bool, error) {

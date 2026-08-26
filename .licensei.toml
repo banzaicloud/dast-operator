@@ -12,11 +12,12 @@ ignored = [
   "gopkg.in/fsnotify.v1", # bsd-3-clause
   "github.com/gogo/protobuf", # BSD3
   "github.com/davecgh/go-spew", # ISC license
+  "google.golang.org/protobuf", # bsd-3-clause
 
 ]
 
 [header]
-ignoreFiles = []
+ignoreFiles = ["zz_generated.deepcopy.go"]
 
 template = """/*
 Copyright 2019 Banzai Cloud.

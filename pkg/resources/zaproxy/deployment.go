@@ -21,14 +21,14 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
 // deployment return a deployment for zaproxy
-func (r *Reconciler) deployment(log logr.Logger) runtime.Object {
+func (r *Reconciler) deployment(log logr.Logger) client.Object {
 
 	return newDeployment(r.Dast)
 }
@@ -79,7 +79,7 @@ func newDeployment(dast *securityv1alpha1.Dast) *appsv1.Deployment {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/",
 										Port: intstr.IntOrString{IntVal: 8080},

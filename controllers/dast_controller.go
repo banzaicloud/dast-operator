@@ -45,8 +45,7 @@ type DastReconciler struct {
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch;watch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;create;list;update;patch;watch
 
-func (r *DastReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *DastReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("dast", req.NamespacedName)
 
 	var dast securityv1alpha1.Dast

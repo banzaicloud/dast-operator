@@ -21,40 +21,34 @@ import (
 	"reflect"
 
 	"emperror.dev/emperror"
+	"emperror.dev/errors"
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
 // Reconcile reconciles K8S resources
-func Reconcile(log logr.Logger, client runtimeClient.Client, desired runtime.Object, cr *securityv1alpha1.Dast) error {
+func Reconcile(log logr.Logger, client runtimeClient.Client, desired runtimeClient.Object, cr *securityv1alpha1.Dast) error {
 	desiredType := reflect.TypeOf(desired)
-	var current = desired.DeepCopyObject()
-	var err error
+	current, ok := desired.DeepCopyObject().(runtimeClient.Object)
+	if !ok {
+		return emperror.With(errors.New("desired object is not a client.Object"), "kind", desiredType)
+	}
 
-	switch desired.(type) {
-	default:
-		var key runtimeClient.ObjectKey
-		key, err = runtimeClient.ObjectKeyFromObject(current)
-		if err != nil {
-			return emperror.With(err, "kind", desiredType)
-		}
-		log = log.WithValues("kind", desiredType, "name", key.Name)
+	key := runtimeClient.ObjectKeyFromObject(current)
+	log = log.WithValues("kind", desiredType, "name", key.Name)
 
-		err = client.Get(context.TODO(), key, current)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return emperror.WrapWith(err, "getting resource failed", "kind", desiredType, "name", key.Name)
+	err := client.Get(context.TODO(), key, current)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return emperror.WrapWith(err, "getting resource failed", "kind", desiredType, "name", key.Name)
+	}
+	if apierrors.IsNotFound(err) {
+		if err := client.Create(context.TODO(), desired); err != nil {
+			return emperror.WrapWith(err, "creating resource failed", "kind", desiredType, "name", key.Name)
 		}
-		if apierrors.IsNotFound(err) {
-			if err := client.Create(context.TODO(), desired); err != nil {
-				return emperror.WrapWith(err, "creating resource failed", "kind", desiredType, "name", key.Name)
-			}
-			log.Info("resource created")
-			return nil
-		}
+		log.Info("resource created")
 	}
 	return nil
 }
