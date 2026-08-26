@@ -8,8 +8,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - uses: unwrittenmedia/helm3-push-action@v1.0.2
+    - uses: actions/checkout@v7
+    - uses: unwrittenmedia/helm3-push-action@v1.0.3
       env:
         SOURCE_DIR: 'charts'
         CHART_FOLDER: 'dast-operator'
