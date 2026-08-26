@@ -18,23 +18,22 @@ package analyzer
 
 import (
 	"github.com/go-logr/logr"
-	"istio.io/pkg/log"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
 // job return a job for analyzer
-func (r *Reconciler) job(log logr.Logger) runtime.Object {
+func (r *Reconciler) job(log logr.Logger) client.Object {
 
-	return newAnalyzerJob(r.Dast)
+	return newAnalyzerJob(r.Dast, log)
 }
 
-func newAnalyzerJob(dast *securityv1alpha1.Dast) *batchv1.Job {
+func newAnalyzerJob(dast *securityv1alpha1.Dast, log logr.Logger) *batchv1.Job {
 	var ownerReferences []metav1.OwnerReference
 	if dast.Spec.Analyzer.Service != nil {
 		ownerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(dast.Spec.Analyzer.Service, schema.GroupVersion{Group: "app", Version: "v1"}.WithKind("Service"))}

@@ -162,7 +162,7 @@ func apiScanner() {
 	client.Script().Enable("Alert_on_Unexpected_Content_Types.js")
 
 	fmt.Println("Importing openapi URL...")
-	_, err = client.Openapi().ImportUrl(openapiURL, target)
+	_, err = client.Openapi().ImportUrl(openapiURL, target, "")
 	if err != nil {
 		log.Fatal(err)
 	}

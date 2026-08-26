@@ -42,8 +42,7 @@ type ServiceReconciler struct {
 
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;create;list;update;patch;watch
 
-func (r *ServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("service", req.NamespacedName)
 
 	var service corev1.Service

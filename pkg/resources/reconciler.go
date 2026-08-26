@@ -18,7 +18,6 @@ package resources
 
 import (
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
@@ -36,4 +35,4 @@ type ComponentReconciler interface {
 }
 
 // ResourceWithLogs function with log parameter
-type ResourceWithLogs func(log logr.Logger) runtime.Object
+type ResourceWithLogs func(log logr.Logger) client.Object

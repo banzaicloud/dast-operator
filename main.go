@@ -23,12 +23,13 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
@@ -49,7 +50,7 @@ func init() {
 	_ = batchv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 	_ = securityv1alpha1.AddToScheme(scheme)
-	_ = extv1beta1.AddToScheme(scheme)
+	_ = networkingv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -65,11 +66,11 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
-		Port:               9443,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "a7efd836.banzaicloud.io",
+		Scheme:           scheme,
+		Metrics:          metricsserver.Options{BindAddress: metricsAddr},
+		WebhookServer:    webhook.NewServer(webhook.Options{Port: 9443}),
+		LeaderElection:   enableLeaderElection,
+		LeaderElectionID: "a7efd836.banzaicloud.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

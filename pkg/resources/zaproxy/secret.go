@@ -20,13 +20,13 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	securityv1alpha1 "github.com/banzaicloud/dast-operator/api/v1alpha1"
 )
 
 // service return a secret for zaproxy
-func (r *Reconciler) secret(log logr.Logger) runtime.Object {
+func (r *Reconciler) secret(log logr.Logger) client.Object {
 
 	return newSecret(r.Dast)
 }
