@@ -15,15 +15,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Fetch history
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: git fetch --prune --unshallow
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+          check-latest: true
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.8.0
 
       - name: Run chart-testing (lint)
         id: lint
-        uses: helm/chart-testing-action@v1.0.0
-        with:
-          command: lint
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
