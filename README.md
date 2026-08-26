@@ -44,19 +44,26 @@ First of all we need to deploy `cert-manager`
 kubectl create namespace cert-manager
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.4/cert-manager.crds.yaml
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.0.4
+kubectl apply --validate=false -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.crds.yaml
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.21.1
 ```
 
-You can read more about the installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/kubernetes/)
+You can read more about the installation of the cert-manager in the [official documentation](https://cert-manager.io/docs/installation/)
 
 ## Deploy the dast-operator via helm
 
-Or you can install via helm:
+The chart is distributed with the source rather than from a chart repository.
+Clone the repository and install from the local chart directory:
 ```shell
-helm repo add banzaicloud https://kubernetes-charts.banzaicloud.com/
-helm install dast-operator banzaicloud/dast-operator
+git clone https://github.com/banzaicloud/dast-operator.git
+cd dast-operator
+helm install dast-operator ./charts/dast-operator
 ```
+
+Requires Kubernetes 1.22 or newer. The chart published at the former
+`kubernetes-charts.banzaicloud.com` repository is no longer available and its
+last release shipped an `apiextensions.k8s.io/v1beta1` CRD, which Kubernetes
+1.22 removed.
 
 ## Build images and deploy the operator manually
 
