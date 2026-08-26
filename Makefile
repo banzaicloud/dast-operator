@@ -7,6 +7,7 @@ CRD_OPTIONS ?= "crd"
 LICENSEI_VERSION = 0.9.0
 CONTROLLER_TOOLS_VERSION ?= v0.21.0
 ENVTEST_K8S_VERSION ?= 1.34.1
+PLUTO_VERSION ?= 5.24.3
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -101,5 +102,14 @@ license-check: bin/licensei
 .PHONY: license-cache
 license-cache: bin/licensei
 	bin/licensei cache
+
+PLUTO = $(GOBIN)/pluto
+.PHONY: pluto
+pluto:
+	GOBIN=$(GOBIN) go install github.com/fairwindsops/pluto/v5/cmd/pluto@v$(PLUTO_VERSION)
+
+.PHONY: validate-manifests
+validate-manifests: pluto
+	PATH="$(GOBIN):$$PATH" ./hack/validate-manifests.sh
 
 
