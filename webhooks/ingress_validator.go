@@ -27,7 +27,11 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spf13/cast"
 	"github.com/zaproxy/zap-api-go/zap"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -70,56 +74,92 @@ func (a *ingressValidator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Errored(http.StatusNotImplemented, err)
 	}
 	a.Log.Info("Services", "backend_services", backendServices)
-	ok, err := checkServices(backendServices, ingress.GetNamespace(), a.Log, a.Client, tresholds)
+	reason, err := checkServices(backendServices, ingress.GetNamespace(), a.Log, a.Client, tresholds)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
-	if !ok {
-		return admission.Denied("scan results are above treshold")
+	if reason != "" {
+		return admission.Denied(reason)
 	}
 
 	return admission.Allowed("scan results are below treshold")
 
 }
 
-func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client, tresholds map[string]int) (bool, error) {
+type scannerJobState string
+
+const (
+	scannerJobNotFound  scannerJobState = "not found"
+	scannerJobRunning   scannerJobState = "running"
+	scannerJobFailed    scannerJobState = "failed"
+	scannerJobCompleted scannerJobState = "completed"
+)
+
+func getScannerJobState(name, namespace string, c client.Client) (scannerJobState, error) {
+	job := &batchv1.Job{}
+	if err := c.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, job); err != nil {
+		if apierrors.IsNotFound(err) {
+			return scannerJobNotFound, nil
+		}
+		return "", emperror.Wrap(err, "cannot get scanner job")
+	}
+	for _, condition := range job.Status.Conditions {
+		if condition.Status != corev1.ConditionTrue {
+			continue
+		}
+		switch condition.Type {
+		case batchv1.JobComplete:
+			return scannerJobCompleted, nil
+		case batchv1.JobFailed:
+			return scannerJobFailed, nil
+		}
+	}
+	return scannerJobRunning, nil
+}
+
+func checkServices(services []map[string]string, namespace string, log logr.Logger, client client.Client, tresholds map[string]int) (string, error) {
 	for _, service := range services {
 		k8sService, err := k8sutil.GetServiceByName(service["name"], namespace, client)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 		zaProxyCfg, err := k8sutil.GetServiceAnotations(k8sService, log)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 		secret, err := k8sutil.GetSercretByName(zaProxyCfg["name"], zaProxyCfg["namespace"], client, log)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
-		// TODO check scan status and wait for end of progress
-		// check the scanner job is running, completed or not exist
+		state, err := getScannerJobState(service["name"], zaProxyCfg["namespace"], client)
+		if err != nil {
+			return "", err
+		}
+		if state != scannerJobCompleted {
+			return fmt.Sprintf("scanner job %s/%s is %s", zaProxyCfg["namespace"], service["name"], state), nil
+		}
 
 		zapCore, err := newZapClient(zaProxyCfg["name"], zaProxyCfg["namespace"], string(secret.Data["zap_api_key"]), log)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 		summary, err := getServiceScanSummary(service, namespace, zapCore, log)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
 		s, err := cast.ToStringMapIntE(summary["alertsSummary"])
 		if err != nil {
-			return false, err
+			return "", err
 		}
 		for key, value := range s {
 			if value > tresholds[key] {
-				return false, nil
+				return "scan results are above treshold", nil
 			}
 		}
 	}
-	return true, nil
+	return "", nil
 }
 
 func getIngressTresholds(ingress *unstructured.Unstructured) map[string]int {

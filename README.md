@@ -10,9 +10,9 @@ This operator leverages [OWASP ZAP](https://www.zaproxy.org) to make automated s
 - Scan internal services based on its annotations
 - API Security testing based on OpenAPI definition
 - Before deploying ingress, check backend services whether scanned and scan results are below defined thresholds
+- In webhook, deny the ingress if the scanner job of a backend service does not exist, is still running or failed
 
 ### On the DAST operator roadmap:
-- In webhook, check the scanner job is running, completed or not exist
 - Improve service status check
 - Handle multiple service ports
 - Handle different service protocols
