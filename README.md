@@ -65,31 +65,90 @@ Requires Kubernetes 1.22 or newer. The chart published at the former
 last release shipped an `apiextensions.k8s.io/v1beta1` CRD, which Kubernetes
 1.22 removed.
 
-## Build images and deploy the operator manually
+## Local testing with locally built images
+
+Use a tag other than `latest` for every image. Kubernetes pulls `latest` images
+from the registry on every start, and the ZAP deployment does not set an image
+pull policy, so a local `latest` image would be ignored.
+
+### Build the images
 
 ```shell
 git clone https://github.com/banzaicloud/dast-operator.git
 cd dast-operator
-make docker-build
-make docker-analyzer
+make docker-build IMG=dast-operator:local
+make docker-analyzer ANALYZER_IMG=dast-analyzer:local
+echo 'FROM ghcr.io/zaproxy/zaproxy:stable' | docker build -t dast-zaproxy:local -
 ```
 
-If you're using `Kind` cluster for testing, you will have to load images to it.
+### Load the images into the cluster
+
+Kind:
 ```shell
-kind load docker-image banzaicloud/dast-operator:latest
-kind load docker-image banzaicloud/dast-analyzer:latest
+for img in dast-operator:local dast-analyzer:local dast-zaproxy:local; do
+  kind load docker-image "$img"
+done
 ```
 
-Clone dast-operator
+Docker Desktop Kubernetes with the `kind` provisioner:
 ```shell
-git clone https://github.com/banzaicloud/dast-operator.git
-cd dast-operator
+for img in dast-operator:local dast-analyzer:local dast-zaproxy:local; do
+  docker save "$img" | docker exec -i desktop-control-plane ctr -n k8s.io images import --all-platforms -
+done
 ```
 
-Deploy dast-operator
+Docker Desktop Kubernetes with the `kubeadm` provisioner uses the Docker Engine
+images directly, so no loading is needed.
+
+### Deploy the operator
+
+Deploy the [cert-manager](#deploy-the-cert-manager) first, then:
 ```shell
-make deploy
+helm install dast-operator ./charts/dast-operator \
+  --namespace dast-operator --create-namespace \
+  --set image.repository=dast-operator \
+  --set image.tag=local \
+  --set image.pullPolicy=Never
 ```
+
+### Run the examples with the local images
+
+Set the images when creating the resources, the operator does not update the
+ZAP deployment or the analyzer job of an existing resource.
+
+Deploy OWASP ZAP with the local image:
+```shell
+kubectl create ns zaproxy
+kubectl apply -n zaproxy -f - <<EOF
+apiVersion: security.banzaicloud.io/v1alpha1
+kind: Dast
+metadata:
+  name: dast-sample
+spec:
+  zaproxy:
+    name: dast-test
+    apikey: abcd1234
+    image: dast-zaproxy:local
+EOF
+```
+
+Deploy the test application. The `dast.security.banzaicloud.io/analyzer_image`
+annotation selects the analyzer image of the scanner job:
+```shell
+kubectl create ns test
+kubectl annotate --local -o yaml -f config/samples/test_service.yaml \
+  dast.security.banzaicloud.io/analyzer_image=dast-analyzer:local \
+  | kubectl apply -n test -f -
+```
+
+Check the scanner job and its results:
+```shell
+kubectl get jobs -n zaproxy
+kubectl logs -n zaproxy job/test-service
+```
+
+For an external URL scan, set `spec.zaproxy.image` and `spec.analyzer.image`
+in the `Dast` custom resource the same way.
 
 ## Examples
 
