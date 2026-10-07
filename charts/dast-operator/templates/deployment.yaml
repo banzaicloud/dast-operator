@@ -44,22 +44,17 @@ spec:
             - name: http
               containerPort: 9443
               protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
           livenessProbe:
             httpGet:
-              httpHeaders:
-                - name: Content-Type
-                  value: application/json
-              path: /ingress
-              port: http
-              scheme: HTTPS
+              path: /healthz
+              port: health
           readinessProbe:
             httpGet:
-              httpHeaders:
-                - name: Content-Type
-                  value: application/json
-              path: /ingress
-              port: http
-              scheme: HTTPS
+              path: /readyz
+              port: health
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
