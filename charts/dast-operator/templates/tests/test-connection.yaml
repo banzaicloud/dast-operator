@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "dast-operator.fullname" . }}:{{ .Values.service.port }}']
+      args: ['-q', '-O', '-', 'http://{{ include "dast-operator.fullname" . }}-webhook-service:8081/readyz']
   restartPolicy: Never

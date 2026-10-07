@@ -28,6 +28,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -56,8 +57,10 @@ func init() {
 
 func main() {
 	var metricsAddr string
+	var probeAddr string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-addr", ":8081", "The address the health probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -66,11 +69,12 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:           scheme,
-		Metrics:          metricsserver.Options{BindAddress: metricsAddr},
-		WebhookServer:    webhook.NewServer(webhook.Options{Port: 9443}),
-		LeaderElection:   enableLeaderElection,
-		LeaderElectionID: "a7efd836.banzaicloud.io",
+		Scheme:                 scheme,
+		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "a7efd836.banzaicloud.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -94,6 +98,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	readyCheck := healthz.Ping
+
 	// Setup webhooks
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		setupLog.Info("setting up webhook server")
@@ -101,9 +107,19 @@ func main() {
 
 		setupLog.Info("registering webhooks to the webhook server")
 		hookServer.Register("/ingress", &webhook.Admission{Handler: webhooks.NewIngressValidator(mgr.GetClient(), ctrl.Log.WithName("webhooks").WithName("Ingress"))})
+		readyCheck = hookServer.StartedChecker()
 	}
 
 	// +kubebuilder:scaffold:builder
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", readyCheck); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
